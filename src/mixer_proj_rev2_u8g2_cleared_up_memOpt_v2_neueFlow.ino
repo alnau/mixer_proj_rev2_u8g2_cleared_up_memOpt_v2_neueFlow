@@ -120,9 +120,10 @@ void powerLoss() {
     return;
 }
 
- 
+
 
 void setup() {
+
 #ifdef IS_DEBUG
   Serial.begin(BAUD_RATE);
   while(!Serial) {
@@ -504,61 +505,73 @@ void printTime(uint16_t T, uint8_t ptr) {
 //режим установки времени работы
 // НЕ РЕНДЕРЕР
 uint16_t setupTime(uint16_t T, uint8_t ptr) {
-  uint8_t digit = 1;
-  uint8_t tmp_digit = digit;
 
-  uint16_t tmp = T;
-  printTime(tmp, ptr, true, digit);
-  u8g2.updateDisplay();
-
-  while (1) {
-    if (u8g2.getMenuEvent() ==ENTER) {
-      printTime(tmp, ptr, false, 0);
-      u8g2.updateDisplay();
-      //T = tmp;
-      return tmp;
-    }
-
+  static uint8_t digit;
+  static uint8_t tmp_digit;
+  uint16_t tmp;
+  
+  if (need_to_load_interface) {
+    digit = 1;
     tmp_digit = digit;
-    digit = leftRight(digit);
-    if (digit != tmp_digit) {
-      printTime(tmp, ptr, true, digit);
-      u8g2.updateDisplay();
-    }
-
-    if (u8g2.getMenuEvent() == UP) {
-
-      //если минуты
-      if (digit == 1) {
-        tmp = constrain(tmp + 60, 0, MAX_TIME);
-      }
-      //десятки секунд
-      if (digit == 2) {
-        tmp = constrain(tmp + 10, 0, MAX_TIME);
-      }
-      //и секунды
-      if (digit == 3) {
-        tmp = constrain(tmp + 1, 0, 255);
-      }
-      printTime(tmp, ptr, true, digit);
-      u8g2.updateDisplay();
-    }
-    else if (u8g2.getMenuEvent() == DOWN) {
-      //printTime(tmp, ptr, true, digit);
-      //если минуты
-      if (digit == 1) {
-        tmp = constrain(tmp - 60, 0, MAX_TIME);
-      }
-      if (digit == 2) {
-        tmp = constrain(tmp - 10, 0, MAX_TIME);
-      }
-      if (digit == 3) {
-        tmp = constrain(tmp - 1, 0, MAX_TIME);
-      }
-      printTime(tmp, ptr, true, digit);
-      u8g2.updateDisplay();
-    }
+    tmp = T;
+    need_to_load_interface = false;
+    printTime(tmp, ptr, true, digit);
+    u8g2.updateDisplay();
   }
+
+
+
+  
+  if (u8g2.getMenuEvent() ==ENTER) {
+    printTime(tmp, ptr, false, 0);
+    u8g2.updateDisplay();
+    //T = tmp;
+    menu_ptr = CYCLE;
+    need_to_load_interface = true;
+    return tmp;
+  }
+
+  tmp_digit = digit;
+  digit = leftRight(digit);
+  if (digit != tmp_digit) {
+    printTime(tmp, ptr, true, digit);
+    u8g2.updateDisplay();
+  }
+
+  if (u8g2.getMenuEvent() == UP) {
+
+    //если минуты
+    if (digit == 1) {
+      tmp = constrain(tmp + 60, 0, MAX_TIME);
+    }
+    //десятки секунд
+    if (digit == 2) {
+      tmp = constrain(tmp + 10, 0, MAX_TIME);
+    }
+    //и секунды
+    if (digit == 3) {
+      tmp = constrain(tmp + 1, 0, 255);
+    }
+    printTime(tmp, ptr, true, digit);
+    u8g2.updateDisplay();
+  }
+  else if (u8g2.getMenuEvent() == DOWN) {
+    //printTime(tmp, ptr, true, digit);
+    //если минуты
+    if (digit == 1) {
+      tmp = constrain(tmp - 60, 0, MAX_TIME);
+    }
+    if (digit == 2) {
+      tmp = constrain(tmp - 10, 0, MAX_TIME);
+    }
+    if (digit == 3) {
+      tmp = constrain(tmp - 1, 0, MAX_TIME);
+    }
+    printTime(tmp, ptr, true, digit);
+    u8g2.updateDisplay();
+  }
+  return tmp;
+  
 }
 
 
@@ -681,19 +694,29 @@ void printText(const __FlashStringHelper* text, uint8_t ptr, uint8_t len) {
 //цикл установки чисел в информационной колонке
 // НЕ РЕНДЕРЕР
 uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
-  uint8_t digit = 1;
-  uint8_t tmp = data;
-  uint8_t tmp_digit = digit;
+  static uint8_t digit;
+  static uint8_t tmp;
+  static uint8_t tmp_digit;
   //uint8_t order = calculateOrder(data);
 
-  printNumbers(tmp, ptr, true, digit);
-  u8g2.updateDisplay();
+  if (need_to_load_interface) {
+    digit = 1;
+    tmp = data; 
+    tmp_digit = digit;
+    printNumbers(tmp, ptr, true, digit);
+    u8g2.updateDisplay();
+    need_to_load_interface = false;
+  }
 
-  while (1) {
+  
+
+
     if (u8g2.getMenuEvent() == ENTER) {
       printNumbers(tmp, ptr);
       u8g2.updateDisplay();
       data = tmp;
+      need_to_load_interface = true;
+      menu_ptr = CYCLE;
       return tmp;
     }
 
@@ -736,7 +759,8 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
       printNumbers(tmp, ptr, true, digit);
       u8g2.updateDisplay();
     }
-  }
+    return tmp;
+  
 }
 
 
@@ -867,31 +891,41 @@ void printCycleRegime(bool is_reversive, bool is_setup) {
 
 //установка режима ускорения
 // НЕ РЕНДЕРЕР
-bool setupAccel(bool is_smooth) {
-  printAccelRegime(is_smooth, true);
-  u8g2.updateDisplay();
-  bool tmp = is_smooth;
+bool setupAccel() {
+  
+  static bool tmp;
+  
+  if (need_to_load_interface) {
+    printAccelRegime(CYCLE_DATA.is_accel_smooth, true);
+    u8g2.updateDisplay();
+    need_to_load_interface = false;
+    tmp = CYCLE_DATA.is_accel_smooth;
+  }
+  
+  
 
-  while (1) {
+  
     if (u8g2.getMenuEvent() == ENTER) {
       printAccelRegime(tmp, false);
       u8g2.updateDisplay();
-      return tmp;
+      need_to_load_interface = true;
+      menu_ptr = CYCLE;
     }
     else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp = !tmp;
       printAccelRegime(tmp, true);
       u8g2.updateDisplay();
     }
-  }
+    return tmp;
+  
 }
 
 //установка режима повторения
 // НЕ РЕНДЕРЕР
-bool setupRepeat(bool is_reversive) {
-  printCycleRegime(is_reversive, true);
+bool setupRepeat() {
+  printCycleRegime(CYCLE_DATA.is_bidirectional, true);
   u8g2.updateDisplay();
-  bool tmp = is_reversive;
+  bool tmp = CYCLE_DATA.is_bidirectional;
 
   while (1) {
     if (u8g2.getMenuEvent() == ENTER) {
@@ -966,16 +1000,25 @@ void setupCycle() {
   }
   else if ((u8g2.getMenuEvent() == ENTER) and !is_working) {
     need_update = true;
-    switch (setup_ptr) {
-      case 0: CYCLE_DATA.t_accel = setupTime(CYCLE_DATA.t_accel, setup_ptr % 4); break;
-      case 1: CYCLE_DATA.v_const = setupNumbers(CYCLE_DATA.v_const, setup_ptr % 4); break;
-      case 2: CYCLE_DATA.t_const = setupTime(CYCLE_DATA.t_const, setup_ptr % 4); break;
-      case 3: CYCLE_DATA.t_slowdown = setupTime(CYCLE_DATA.t_slowdown, setup_ptr % 4); break;
-      case 4: CYCLE_DATA.t_pause = setupTime(CYCLE_DATA.t_pause, setup_ptr % 4); break;
-      case 5: CYCLE_DATA.num_cycles = setupNumbers(CYCLE_DATA.num_cycles, setup_ptr % 4); break;
-      case 6: CYCLE_DATA.is_accel_smooth = setupAccel(CYCLE_DATA.is_accel_smooth); break;
-      case 7: CYCLE_DATA.is_bidirectional = setupRepeat(CYCLE_DATA.is_bidirectional); break;
-    }
+    need_to_load_interface = true;
+    // switch (setup_ptr) {
+    //   case 0: CYCLE_DATA.t_accel = setupTime(CYCLE_DATA.t_accel, setup_ptr % 4); break;
+    //   case 1: CYCLE_DATA.v_const = setupNumbers(CYCLE_DATA.v_const, setup_ptr % 4); break;
+    //   case 2: CYCLE_DATA.t_const = setupTime(CYCLE_DATA.t_const, setup_ptr % 4); break;
+    //   case 3: CYCLE_DATA.t_slowdown = setupTime(CYCLE_DATA.t_slowdown, setup_ptr % 4); break;
+    //   case 4: CYCLE_DATA.t_pause = setupTime(CYCLE_DATA.t_pause, setup_ptr % 4); break;
+    //   case 5: CYCLE_DATA.num_cycles = setupNumbers(CYCLE_DATA.num_cycles, setup_ptr % 4); break;
+    //   case 6: CYCLE_DATA.is_accel_smooth = setupAccel(); break;
+    //   case 7: CYCLE_DATA.is_bidirectional = setupRepeat(); break;
+    // }
+    /*
+     * Тут нужно пояснение
+     * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
+     * реализации прибавление setup_ptr к шестерки автоматически вычисляет нужный литерал
+     * всго за один такт 
+     
+    */
+    menu_ptr = 6 + setup_ptr; 
   
   }
 
@@ -1162,9 +1205,11 @@ void settings() {
   }
   else if (u8g2.getMenuEvent() == ENTER) {
     refresh_screen = true;
+    need_to_load_interface = true;
     switch (settings_cursor) {
-      case 0: need_sound = setupSound(); break;
-      case 1: safe_stop = setupSafeStop(); break;
+      // case 0: need_sound = setupSound(); break;
+      // case 1: safe_stop = setupSafeStop(); break;
+      menu_ptr = settings_cursor + 14;
 #ifdef IS_DEBUG
       case 2: Serial.println(F("Данные1")); break;
       case 3: Serial.println(F("Данные2")); break;
@@ -1303,13 +1348,23 @@ void refreshSettings() {
 
 // НЕ РЕНДЕРЕР
 bool setupSafeStop() {
-  bool tmp_safe_stop = safe_stop;
-  printSafeStopStatus(tmp_safe_stop, true);
-  u8g2.updateDisplay();
-  while (1) {
+  static bool tmp_safe_stop;
+
+  if (need_to_load_interface) {
+    tmp_safe_stop = safe_stop;
+    printSafeStopStatus(tmp_safe_stop, true);
+    u8g2.updateDisplay();
+    need_to_load_interface = false;
+  }
+
+
+
+  
     if (u8g2.getMenuEvent()==ENTER ) {
       printSafeStopStatus(tmp_safe_stop, false);
       u8g2.updateDisplay();
+      need_to_load_interface = true;
+      menu_ptr = SETTINGS;
       return tmp_safe_stop;
     }
     else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
@@ -1317,21 +1372,29 @@ bool setupSafeStop() {
       printSafeStopStatus(tmp_safe_stop, true);
       u8g2.updateDisplay();
     }
-  }
+  return tmp_safe_stop;
 }
 
 
 //установка громкости
 // НЕ РЕНДЕРЕР
 bool setupSound() {
+  static bool tmp_need_sound;
 
-  bool tmp_need_sound = need_sound;
-  printSoundStatus(tmp_need_sound, true);
-  u8g2.updateDisplay();
-  while (1) {
-    if (u8g2.getMenuEvent() == DOWN) {
+  if (need_to_load_interface) {
+    tmp_need_sound = need_sound;
+    printSoundStatus(tmp_need_sound, true);
+    u8g2.updateDisplay();
+    need_to_load_interface = false;
+  }
+
+
+  
+    if (u8g2.getMenuEvent() == ENTER) {
       printSoundStatus(tmp_need_sound, false);
       u8g2.updateDisplay();
+      menu_ptr = SETTINGS;
+      need_to_load_interface = true;
       return tmp_need_sound;
     }
     else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
@@ -1339,7 +1402,8 @@ bool setupSound() {
       printSoundStatus(tmp_need_sound, true);
       u8g2.updateDisplay();
     }
-  }
+    return tmp_need_sound;
+  
 }
 
 //отрисовка курсора в менющке из восьми элементов
@@ -1369,7 +1433,6 @@ void loop() {
   //Serial.println(USER_DECEL); //9.549 = 60/(2*PI)
   
 
-
   switch(menu_ptr) {
     case SPEED: 
       speed_menu();
@@ -1394,9 +1457,62 @@ void loop() {
     case PROGRAM_SETUP:
 
       break;
+    
+    case SETUP_T_ACCEL:
+      CYCLE_DATA.t_accel = setupTime(CYCLE_DATA.t_accel, (menu_ptr-6)%4);
+      break;
+
+    case SETUP_V: 
+      CYCLE_DATA.v_const = setupNumbers(CYCLE_DATA.v_const, (menu_ptr-6)%4);
+      break;
+    
+    case SETUP_T_WORK: 
+      CYCLE_DATA.t_const = setupTime(CYCLE_DATA.t_const, (menu_ptr-6)%4);
+      break;
+
+    case SETUP_T_SLOWDOWN: 
+      CYCLE_DATA.t_slowdown = setupTime(CYCLE_DATA.t_slowdown, (menu_ptr-6)%4);
+      break;
+
+    case SETUP_T_PAUSE: 
+      CYCLE_DATA.t_pause = setupTime(CYCLE_DATA.t_pause, (menu_ptr-6)%4);
+      break;
+
+    case SETUP_N_CYCLES: 
+      CYCLE_DATA.num_cycles = setupNumbers(CYCLE_DATA.num_cycles, (menu_ptr-6)%4);
+      break;
+
+    case SETUP_SMOOTHNESS:
+      CYCLE_DATA.is_accel_smooth = setupAccel();
+      break;
+
+    case SETUP_DIR: 
+      CYCLE_DATA.is_bidirectional = setupRepeat();
+      break;
+
+    case SETUP_SOUND:
+      
+      break;
+
+    case SETUP_SAFE_STOP:
+
+      break;
+
+    case SEND_DATA:
+      menu_ptr = SETTINGS;
+      need_to_load_interface = true;
+      break;
+
+    case RECIEVE_DATA:
+      menu_ptr = SETTINGS;
+      need_to_load_interface = true;
+      break;
+
+      
   }
   // меню выбора программы
   // меню программирования 
   
+
   
 }

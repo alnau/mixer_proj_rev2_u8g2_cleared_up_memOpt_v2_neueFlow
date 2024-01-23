@@ -24,12 +24,30 @@
 #define RSE 40
 #define CS 38
 
+// Перевод с итераторов на state machine
+// Функции высших уровней
 #define SPEED 0
 #define MAIN 1
 #define CYCLE 2
 #define SETTINGS 3
 #define PROGRAM_SELECT 4
 #define PROGRAM_SETUP 5
+
+// Настройка цикла перемешивания
+#define SETUP_T_ACCEL 6
+#define SETUP_V 7
+#define SETUP_T_WORK 8
+#define SETUP_T_SLOWDOWN 9
+#define SETUP_T_PAUSE 10
+#define SETUP_N_CYCLES 11
+#define SETUP_SMOOTHNESS 12
+#define SETUP_DIR 13
+
+// Статус настроек
+#define SETUP_SOUND 14
+#define SETUP_SAFE_STOP 15
+#define SEND_DATA 16
+#define RECIEVE_DATA 17
 
 //==== Пины мотора ====
 // Пин шага. Переход в HIGH делает шаг
