@@ -1,0 +1,418 @@
+#include "stepper.h"
+
+//! Cointains data for timer interrupt.
+speedRampData srd;
+memory_data md;
+
+void loadDataFromMem() {
+  md.mem_t_accel = eeprom_read_word((uint16_t *)START_BYTE);
+  md.mem_speed = eeprom_read_word((uint16_t *)(START_BYTE + SIZE_OF_DATA));
+  md.mem_t_run = eeprom_read_word((uint16_t *)(START_BYTE + 2 * SIZE_OF_DATA));
+  md.mem_t_decel = eeprom_read_word((uint16_t *)(START_BYTE + 3 * SIZE_OF_DATA));
+  md.mem_t_pause = eeprom_read_word((uint16_t *)(START_BYTE + 4 * SIZE_OF_DATA));
+  md.mem_n_cycles = eeprom_read_word((uint16_t *)(START_BYTE + 4* SIZE_OF_DATA));
+  md.mem_is_bidir = (eeprom_read_byte((uint8_t *)(START_BYTE + 6 * SIZE_OF_DATA)) >> 1) & 0b00000001; // так как интересует только второй бит 
+}
+
+/*! \brief Функция сводящая необходимые мне параметры на язык AVR446
+ *
+ * Пересчитывает велечины из об/мин в 0.01 рад/с. Также рассчитывает ускорение, 
+ * Замдление и кол-во шагов. 
+*/
+void startMotor() {
+
+  loadDataFromMem();
+  uint16_t speed_100 = 10*3.14*md.mem_speed/3; //(2*3.14*100*RPM)/(60);
+  int32_t step = (int32_t)md.mem_speed*(int32_t)SPR*(int32_t)(md.mem_t_run + (md.mem_t_decel + md.mem_t_accel)/2)/60; 
+  uint16_t accel = speed_100/md.mem_t_accel ;
+  uint16_t  decel = speed_100 / md.mem_t_decel;
+
+  srd.dir = CCW;
+  move(step, accel, decel, speed_100, md.mem_t_pause, md.mem_n_cycles, md.mem_is_bidir);
+}
+
+/*! \brief Инициализирует режим работы с заданным числом шагов.
+ *
+ * 
+ * Шаговый мотор делает заданное число шагов, реализуя рампу с заданным ускорением,
+ * замедлением и скоростью. Если ускорение/замедление слишком мало и шагов недостаточно
+ * для достижения необходимой скорости, торможение начнется до достижения "полки"
+ *
+ * \param step - число шагов
+ * \param accel - величина ускорения, в 0.01 рад/с^2
+ * \param deccel - величина ускорения, в 0.01 рад/с^2
+ * \param speed - Необходимая скорость в 0.01 рад/с
+ * \param t_pause - время паузы в секундах
+ * \param n_cyles - число повторений циклов рампы
+ * \param is_bidir - булево значение (true -> двустороннее вращение, false -> одностороннее)
+*/
+void move(int32_t step, uint16_t accel, uint16_t decel, uint16_t speed, uint16_t t_pause, uint16_t n_cycles, bool is_bidir) {
+
+  //! Число шагов до того, как мы достигнем макс скорости
+  uint32_t max_s_lim;
+  //! число шагов до начала торможения (если не успеем достичь макс скорости) TODO: НЕ НУЖНО, УБРАТЬ
+  uint32_t accel_lim;
+
+  srd.n_cycles = n_cycles;  //И кол-во циклов
+  srd.accel = accel;        //Сохранение ускорения для пересчета новых циклов
+  srd.is_bidir = is_bidir;  //Запомнили одно- или двухсторотнее вращение
+  srd.t_pause = t_pause;     //Сохраним время паузы   
+  srd.speed = speed;
+
+  // Выставим направление вращения, основываясь на знаке числа шагов
+  if (step < 0) {
+    srd.dir = CCW;
+    step = -step;
+  } else {
+    srd.dir = CW;
+  }
+
+  // Если движемся только один шаг
+  if (step == 1) {
+    Serial.println("Lo step. Wont start");
+    // Двигаемся...
+    srd.accel_count = -1;
+    // ...переходим в режим торможения
+    srd.run_state = DECEL;
+    //! Короткая пауза, чтобы программа думала что она работает TODO: А надо ли?
+    srd.step_delay = 1000;
+    OCR1A = 10;
+    //! Запустить таймер с делителем на 8. TODO: на 27.11 делитель 64
+    TCCR1B |= ((0 << CS12) | (1 << CS11) | (0 << CS10));
+  }
+  // Двигаться  оько если число шагов не равно нулю
+  else if (step != 0) {
+    // Ввести верхний предел скорости, рассчитав минимальную паузу
+    // min_delay = (alpha / tt)/ w
+    srd.min_delay = A_T_x100 / speed;
+
+    // Находим паузу до первого шага (c_0) для того, чтобы задать ускорение
+    // step_delay = 1/tt * sqrt(2*alpha/accel)
+    // step_delay = ( tfreq*0.676/100 )*100 * sqrt( (2*alpha*10000000000) / (accel*100) )/10000
+    srd.step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / accel)) / 100;
+
+    // найдем через сколько шагов мы достигнем макс. скорости
+    // max_s_lim = speed^2 / (2*alpha*accel)
+    max_s_lim = (long)speed * speed / (long)(((long)A_x20000 * accel) / 100);
+    //если по какой-то причине мы получим 0, то все равно делаем хоть один шаг
+    if (max_s_lim == 0) {
+      max_s_lim = 1;
+    }
+
+    // Найдем через сколько шагов нам нужно было-бы начать торможение, если бы нам нужно было только ускоряться и тормозить /=\ => /\ 
+    // n1 = (n1+n2)decel / (accel + decel)
+    accel_lim = ((long)step * decel) / (accel + decel);
+    // Аналогично, мы должны ускоритьс хлоть один шаг перед началом торможения
+    if (accel_lim == 0) {
+      accel_lim = 1;
+    }
+
+    // Если мы не успеваем достичь необходимой скорости, то все равно начнем торможние ().
+    //! TODO: не реализуется в нашем случае - убрать как только пойдет вторая ревизия
+    if (accel_lim <= max_s_lim) {
+      srd.decel_val = accel_lim - step;
+    } else {
+      //! TODO: Единственная линия по которой может идти эта логика. Только она должна быть сохранена
+      // Логика такая, что (max_s_lim) * accel/decel = w^2/(2 alpha accel) *accel/decel = w^2/(2 alp
+      srd.decel_val = -((long)max_s_lim * accel) / decel;
+    }
+    // Тормозим хоть один шаг
+    if (srd.decel_val == 0) {
+      srd.decel_val = -1;
+    }
+
+    // Отсюда srd.decel_val полностью адекватное число шагов для того, чтобы затормозить двигатель
+    
+    // Так как srd.decel_val < 0 => step + srd.decel_val = step - steps_to_stop - норм 
+    srd.decel_start = step + srd.decel_val;
+
+    // На случай, если макс. скорость настолько мала, что мы можем сразу переходить в режим постоянного вращения
+    if (srd.step_delay <= srd.min_delay) {
+      //Serial.println("Lo speed. Wont start ACCEL");
+      srd.step_delay = srd.min_delay;
+      srd.run_state = RUN;
+    } else {
+      // Если все норм, то установим статус как УСКОРЕНИЕ
+      srd.run_state = ACCEL;
+      Serial.println("ACCEL");
+    }
+
+    // Обновим счетчик
+    srd.accel_count = 0;
+    OCR1A = 10;
+    // Установим таймер с делителем на 64
+    TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
+
+    //И опустим ENA_PIN, чтобы двигатель работал
+    PORTD &= ~(1<< ENA_PIN); // ENA_PIN -> LOW
+    
+  }
+}
+
+
+/*! \brief Инициализация счетчика на Timer1.
+ *
+ */
+void initTimer1(void) {
+  // На всякий случай установим что мы в состоянии STOP
+  srd.run_state = STOP;
+  //Без этого не работает [предположительно] не работает OCR1A
+  TCCR1A = 0;
+  // Timer/Counter 1 в режиме 4 CTC (Не работает)
+  TCCR1B = (1 << WGM12);
+  // Timer/Counter 1 Output Compare A Match Interrupt enable.
+  TIMSK1 = (1 << OCIE1A);
+}
+
+/*! \brief Прерывание, которое триггерится по таймеру
+ *
+ *  При совпадения счетчика таймера и содержимого OCR1A
+ *  вызывается это прерывание. В нем находится основная логика
+ *  рассчета числа тиков таймера до следующего шага
+ */
+ISR(TIMER1_COMPA_vect) {
+  // Время следующей паузы
+  uint32_t new_step_delay;
+  // для запоминания последней паузы при ускорении. Используется для "затравки" торможения
+  static int32_t last_accel_delay;
+  // считает шаги при постоянном вращении (?)
+  static uint32_t step_count = 0;
+  // сохраняем остаток от деления при вычислении периода между шагами
+  static uint32_t rest = 0;
+
+  //загрузим в OCR1A паузу c_i (изначально c_0, но обновляется при каждом вызове)
+  OCR1A = srd.step_delay;
+  OCR1B = (srd.step_delay >> 8);
+  
+  switch (srd.run_state) {
+    case STOP:
+      // Если не работаем, то обнулим все и остановим таймер1
+      step_count = 0;
+      rest = 0;
+      // Остановим Timer1
+      TCCR1B &= ~((1 << CS12) | (1 << CS11) | (1 << CS10));
+      break;
+
+    case ACCEL:
+    // Если в режиме ускорения
+      //делаем шаг
+      doTheFStep(srd.dir);
+      step_count++; //прибавим общее число шагов
+      srd.accel_count++;  //и прибавим счтчик ускорения
+      new_step_delay = srd.step_delay - (((2 * (long)srd.step_delay) + rest) / (4 * srd.accel_count + 1));  // Нашли новую паузу 
+      rest = ((2 * (long)srd.step_delay) + rest) % (4 * srd.accel_count + 1); //обновил остаток для следующей итерации
+      // Проверим, не нужно ли нам начать тормозить 
+      //! TODO: Не реализуется в нашем случае, в этом конкретном виде, но нужно оставть
+      //  Аналог на случай торможения, вызванного пользователя
+      if (step_count >= srd.decel_start) {
+        srd.accel_count = srd.decel_val;
+        srd.run_state = DECEL;
+        Serial.println("DECEL");
+      }
+      // Проверим, не достигли ли мы макс скорости
+      else if (new_step_delay <= srd.min_delay) {
+        last_accel_delay = new_step_delay;  //сохранили последний вычисленный период ожидания
+        new_step_delay = srd.min_delay; // Записали что теперь мы вращаемся с фиксированной скоростью, определяемой минимальной паузой
+        rest = 0;
+
+        srd.run_state = RUN;
+        Serial.println("RUN"); 
+      }
+      break;
+
+    case RUN:
+      if (need_to_stop) {
+        //обработка необходимости остановки
+        need_to_stop = false; //сняли флаг
+        srd.run_state = DECEL;
+        is_stopping = true;
+        //далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
+        srd.decel_val = - (long)srd.speed*srd.speed/(long)(((long)A_x20000 * USER_DECEL) / 100);
+      }
+      else {
+        doTheFStep(srd.dir);
+        step_count++;
+        new_step_delay = srd.min_delay; //каждый раз обновляем паузу как минмиальную задержку
+        // Проверим, не пора ли нам остановиться
+        if (step_count >= srd.decel_start) {
+          srd.accel_count = srd.decel_val;  //Загрузили кол-во шагов, необходимое для торможения (вернее, их отрицательную величину)
+          // Начать торможение с той-же паузой, которая была вычислена на последнем ускорении (TODO: ?!)
+          new_step_delay = last_accel_delay;
+          srd.run_state = DECEL;
+          Serial.println("DECEL");
+          //rest=0;
+        }
+      }
+      break;
+
+    case DECEL:
+    // Аналогично ускорению, 
+      doTheFStep(srd.dir);
+      step_count++;
+      srd.accel_count++;
+      new_step_delay = srd.step_delay + (((2 * (long)srd.step_delay) + rest) / (-4*srd.accel_count -3));
+      rest = ((2 * (long)srd.step_delay) + rest) % (-4 * srd.accel_count - 3);
+      // Проверка на последний шаг
+      if (srd.accel_count >= 0) {
+        if (is_stopping) {
+          //Если пользователь закончил работу и мы закончили тормозить, то останавливаем все рассчеты
+          srd.run_state = STOP;
+          is_stopping = false;
+        }
+        else{
+          if (srd.t_pause == 0) {
+            //Если нет паузы, то проводим все вычисления здесь
+            if (srd.n_cycles==1) {
+              //Если после этого не осталось циклов, то тормозим
+              srd.run_state = STOP; 
+              Serial.println("STOP");
+              PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH (убрали ток удержания)
+            }
+            else {
+              //Если циклы остались (бесконечно или конечно) 
+              if (srd.is_bidir) {
+                //Если двустороннее вращение, то меняем направление
+                srd.dir = (srd.dir == CCW)?CW:CCW;
+              }
+              if (srd.n_cycles!=0) {
+                srd.n_cycles--;
+              }
+              //Логика запуска цикла по-новой 
+              //! TODO: возможно, следует сохранять не ускорение, а сразу c_0 
+              new_step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / srd.accel))/100;
+              rest = 0;
+              step_count = 0;
+              srd.accel_count = 0;
+              srd.run_state = ACCEL;
+              Serial.println("ACCEL");
+              OCR1A = new_step_delay; //На всякий случай
+            }
+          }
+          else {
+            
+            //Запускаем паузу, и перенесем все рассчеты нового цикла в нее
+            srd.run_state = PAUSE;
+            Serial.println("PAUSE");
+
+            // Перейдем в режим паузы и каждую секунду будем триггерить прерывание, пока не истечет необходимое время 
+            noInterrupts();  // Отключаем прерывания
+            
+            TCCR1A = 0;
+            TCCR1B = 0;
+
+            TCCR1B |= (1 << WGM12); // Выставляем CTC (Clear Timer on Compare Match mode)
+            TCCR1B |= (1 << CS12);  // ставим делитель на 256
+
+            OCR1A = 62500 - 1;  // Выставим величину, с которой мы сравниваем на прерывания каждую секунду 
+
+            TIMSK1 |= (1 << OCIE1A);  // Разрешаем  TIMER1_COMPA прерывания (не факт что нужно, просто на всякий случай)          
+            srd.t_pause = md.mem_t_pause; //Выставим счетчик паузы из памяти (вероятно, может понадобиться вычесть 1с)
+
+            interrupts();  // Разрешаем прерывания
+          }
+        }
+      }
+    break;
+
+    case PAUSE:
+      srd.t_pause--; //Вычли один из периодов паузы
+
+      if (srd.t_pause == 0) {
+        //Если пауза кончилась, действуем полностью аналогично ситуации с концом ускорения 
+        if (srd.n_cycles==1) {
+          //Если после этого не осталось циклов, то тормозим
+          srd.run_state = STOP; 
+          Serial.println("STOP");
+          PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH
+        }
+        else {
+          //Если циклы остались (бесконечно или конечно) 
+          if (srd.is_bidir) {
+            //Если двустороннее вращение, то меняем направление
+            srd.dir = (srd.dir == CCW)?CW:CCW;
+          }
+          if (srd.n_cycles!=0) {
+            srd.n_cycles--;
+          }
+          //Логика запуска цикла по-новой 
+          new_step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / srd.accel))/100;
+          Serial.println(new_step_delay);
+          rest = 0;
+          step_count = 0;
+          srd.accel_count = 0;
+          srd.run_state = ACCEL;
+          Serial.println("ACCEL");
+          
+          noInterrupts();
+          TCCR1A = 0;
+          TCCR1B = 0;
+
+          TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));  // вернем делитель на 64
+          TCCR1B |= (1 << WGM12); // Выставляем CTC (Clear Timer on Compare Match mode)
+          OCR1A = new_step_delay; //На всякий случай
+          interrupts();
+        }
+      }
+    break;
+  }
+   
+  srd.step_delay = new_step_delay;
+}
+
+void initStepper() {
+  
+  DDRD |= (1 << ENA_PIN); //pinMode(ENA_PIN, OUTPUT);
+  DDRD |= (1 << STEP_PIN); //pinMode(STEP_PIN, OUTPUT);
+  DDRD |= (1 << DIR_PIN); //pinMode(DIR_PIN, OUTPUT);
+
+  PORTD |= (1<< ENA_PIN);  //digitalWrite(ENA_PIN, HIGH);
+}
+
+void doTheFStep(uint8_t dir) {
+
+  if (dir == CCW) 
+    PORTD |= (1 << DIR_PIN);  
+  else 
+    PORTD &= ~(1 << DIR_PIN);
+
+  //digitalWrite(DIR_PIN, dir);  //0 = CW, 1 = CCW
+  PORTD |= (1 << STEP_PIN); //digitalWrite(STEP_PIN, HIGH);
+  delayMicroseconds(2);
+  PORTD &= ~(1 << STEP_PIN); //digitalWrite(STEP_PIN, LOW);
+}
+
+/*! \brief Square root routine.
+ *
+ * sqrt routine 'grupe', from comp.sys.ibm.pc.programmer
+ * Subject: Summary: SQRT(int) algorithm (with profiling)
+ *    From: warwick@cs.uq.oz.au (Warwick Allison)
+ *    Date: Tue Oct 8 09:16:35 1991
+ *
+ *  \param x  Value to find square root of.
+ *  \return  Square root of x.
+ */
+static unsigned long m_sqrt(unsigned long x) {
+  register unsigned long xr;  // result register
+  register unsigned long q2;  // scan-bit register
+  register unsigned char f;   // flag (one bit)
+
+  xr = 0;            // clear result
+  q2 = 0x40000000L;  // higest possible result bit
+  do {
+    if ((xr + q2) <= x) {
+      x -= xr + q2;
+      f = 1;  // set flag
+    } else {
+      f = 0;  // clear flag
+    }
+    xr >>= 1;
+    if (f) {
+      xr += q2;  // test flag
+    }
+  } while (q2 >>= 2);  // shift twice
+  if (xr < x) {
+    return xr + 1;  // add for rounding
+  } else {
+    return xr;
+  }
+}
