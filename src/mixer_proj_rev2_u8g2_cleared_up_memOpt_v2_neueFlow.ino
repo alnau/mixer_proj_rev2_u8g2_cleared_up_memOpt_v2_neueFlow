@@ -223,7 +223,7 @@ void checkEmergencyStop() {
 void printMainMenu() {
   for (int i = 0; i < MM_ITEMS; i++) {
     u8g2.setCursor(8, 4 + 8 + 16 * i);
-    PGM_P pstr = pgm_read_word(main_menu_items[i]);
+    PGM_P pstr = pgm_read_word(main_menu_items + i);
     char buffer[strlen_P(pstr)+1];
     strcpy_P(buffer, pstr);
     u8g2.print(buffer);
@@ -790,7 +790,7 @@ void printSetupPages(uint8_t cursor) {
     for (uint8_t i = 0; i < 4; i++) {
       u8g2.setCursor(8, 4 + i * 16 + 8);
 
-      PGM_P pstr = pgm_read_word(setup_menu_items[i]);
+      PGM_P pstr = pgm_read_word(setup_menu_items + i);
       char buffer[strlen_P(pstr)+1];
       strcpy_P(buffer, pstr);
 
@@ -800,7 +800,7 @@ void printSetupPages(uint8_t cursor) {
     for (uint8_t i = 0; i < 4; i++) {
       u8g2.setCursor(8, 4 + i * 16 + 8);
 
-      PGM_P pstr = pgm_read_word(setup_menu_items[i + 4]);
+      PGM_P pstr = pgm_read_word(setup_menu_items + i + 4);
       char buffer[strlen_P(pstr)+1];
       strcpy_P(buffer, pstr);
 
