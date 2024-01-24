@@ -10,7 +10,7 @@
 
 //#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
 
-
+//#define IS_DEBUG
 void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
 
 
@@ -137,6 +137,8 @@ void setup() {
   initStepper();
   initTimer1();
   checkEmergencyStop();
+  menu_ptr = SPEED;
+  need_to_load_interface = true;
   
 
   // подключили кнопку на D2 и GND
@@ -1431,7 +1433,7 @@ void printScrollBar(uint8_t ptr, uint8_t num_items) {
 
 void loop() {
   //Serial.println(USER_DECEL); //9.549 = 60/(2*PI)
-  
+  Serial.println(menu_ptr);
 
   switch(menu_ptr) {
     case SPEED: 
@@ -1503,10 +1505,10 @@ void loop() {
       need_to_load_interface = true;
       break;
 
-    case RECIEVE_DATA:
-      menu_ptr = SETTINGS;
-      need_to_load_interface = true;
-      break;
+    // case RECIEVE_DATA:
+    //   menu_ptr = SETTINGS;
+    //   need_to_load_interface = true;
+    //   break;
 
       
   }
