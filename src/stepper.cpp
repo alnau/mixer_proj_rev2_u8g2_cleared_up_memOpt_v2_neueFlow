@@ -522,17 +522,17 @@ void initStepper()
 
 void doTheFStep(uint8_t dir)
 {
-
-	if (dir == CCW)
-	{
-		digitalWrite(DIR_PIN, HIGH);
-		// PORTD |= (1 << DIR_PIN);
-	}
-	else
-	{
-		digitalWrite(DIR_PIN, LOW);
-		// PORTD &= ~(1 << DIR_PIN);
-	}
+	digitalWrite(DIR_PIN, dir);
+	// if (dir == CCW)
+	// {
+	// 	digitalWrite(DIR_PIN, HIGH);
+	// 	// PORTD |= (1 << DIR_PIN);
+	// }
+	// else
+	// {
+	// 	digitalWrite(DIR_PIN, LOW);
+	// 	// PORTD &= ~(1 << DIR_PIN);
+	// }
 
 	digitalWrite(STEP_PIN, HIGH);
 	// PORTD |= (1 << STEP_PIN); //digitalWrite(STEP_PIN, HIGH);
@@ -650,6 +650,33 @@ void saveRampState(uint32_t step_count, uint32_t rest, uint16_t last_accel_delay
 	debugln(F("===== Actual data ====="));
 	printRampData();
 
+}
+
+void endOfCycleHandler() {
+	if (srd.n_cycles == 1)
+	{
+		// Если после этого не осталось циклов, то тормозим
+		srd.run_state = STOP;
+		debugln(F("STOP"));
+
+		digitalWrite(ENA_PIN, HIGH);
+		is_working = false;
+		refresh_screen = true;
+		// PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH (убрали ток удержания)
+	}
+	else
+	{
+		// Если циклы остались (бесконечно или конечно)
+		if (srd.is_bidir)
+		{
+			// Если двустороннее вращение, то меняем направление
+			srd.dir = (srd.dir == CCW) ? CW : CCW;
+		}
+		if (srd.n_cycles != 0)
+		{
+			srd.n_cycles--;
+		}
+	}
 }
 
 /*! \brief Square root routine.
