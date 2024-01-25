@@ -3,7 +3,8 @@
 
 
 #include <U8g2lib.h>
-#include <EncButton.h>
+#include "tiny_button.h"
+//#include <EncButton.h>
 
 #include <Arduino.h>
 #include <avr/eeprom.h>

@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "libs_header.h"
 #include "utils.h"
-#include "u8g2_constructor.h"
+#include "io_constructor.h"
 
 // альтеренативная функция для меню программирования
 uint8_t scrollText_8(char *text, uint8_t cursor, uint8_t counter)
@@ -104,8 +104,8 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 
 	while (1)
 	{
-
-		if (u8g2.getMenuEvent() == ENTER)
+		enter.tick();
+		if (enter.isClicked()) //if (u8g2.getMenuEvent() == ENTER)
 		{
 			printProgNumbers(tmp, ptr, false, ptr);
 			u8g2.updateDisplay();
@@ -122,8 +122,9 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 		}
 
 		printProgNumbers(tmp, ptr, true, digit);
-
-		if (u8g2.getMenuEvent() == UP)
+		up.tick();
+		down.tick();
+		if (up.isClicked()) //if (u8g2.getMenuEvent() == UP)
 		{
 			// если сотни
 			if (digit == 1)
@@ -143,7 +144,7 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 			printProgNumbers(tmp, ptr, true, digit);
 			u8g2.updateDisplay();
 		}
-		else if (u8g2.getMenuEvent() == DOWN)
+		else if (down.isClicked()) //else if (u8g2.getMenuEvent() == DOWN)
 		{
 			// если сотни
 			if (digit == 1)
@@ -192,7 +193,8 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 
 	while (1)
 	{
-		if (u8g2.getMenuEvent() == ENTER)
+		enter.tick();
+		if (enter.isClicked())	//if (u8g2.getMenuEvent() == ENTER)
 		{
 			printProgTime(tmp, ptr, false, 0);
 			u8g2.updateDisplay();
@@ -206,7 +208,10 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 			u8g2.updateDisplay();
 		}
 
-		if (u8g2.getMenuEvent() == UP)
+		up.tick();
+		down.tick();
+		
+		if (up.isClicked())	//if (u8g2.getMenuEvent() == UP)
 		{
 
 			// если минуты
@@ -227,7 +232,7 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 			printProgTime(tmp, ptr, true, digit);
 			u8g2.updateDisplay();
 		}
-		else if (u8g2.getMenuEvent() == DOWN)
+		else if (down.isClicked())	//else if (u8g2.getMenuEvent() == DOWN)
 		{
 			// printTime(tmp, ptr, true, digit);
 			// если минуты
@@ -338,7 +343,8 @@ bool start_program(uint8_t prog_ptr, uint8_t curr_point_num)
 
 	while (1)
 	{
-		if (u8g2.getMenuEvent() == ENTER)
+		enter.tick();
+		if (enter.isClicked()) //if (u8g2.getMenuEvent() == ENTER)
 		{
 			// очистить экран
 			need_refresh_prog_page = true;
@@ -364,7 +370,9 @@ bool start_program(uint8_t prog_ptr, uint8_t curr_point_num)
 			}
 		}
 
-		if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN))
+		up.tick();
+		down.tick();
+		if (down.isClicked() or down.isClicked())	//if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN))
 		{
 
 			yes_is_selected = !yes_is_selected; // обновить выбор
@@ -412,12 +420,15 @@ void setupProgram(uint8_t prog_ptr)
 
 	while (1)
 	{
-		if (u8g2.getMenuEvent() == FUNC)
+		func.tick();
+		enter.tick();
+		
+		if (func.isClicked())	//if (u8g2.getMenuEvent() == FUNC)
 		{
 			u8g2.clear();
 			return;
 		}
-		else if (u8g2.getMenuEvent() == ENTER)
+		else if (enter.isClicked())//else if (u8g2.getMenuEvent() == ENTER)
 		{
 			need_update_eeprom = true;
 			switch (item_num)

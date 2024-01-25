@@ -23,7 +23,7 @@ extern bool need_sound;
 
 // extern bool need_refresh_speed_menu;
 // extern bool need_refresh_mm;
-// extern bool need_refresh_prog_page;
+extern bool need_refresh_prog_page;
 // extern bool need_refresh_settings;
 extern bool refresh_screen;
 extern bool need_to_load_interface;

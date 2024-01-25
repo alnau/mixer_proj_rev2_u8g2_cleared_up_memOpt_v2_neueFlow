@@ -1,12 +1,12 @@
 
 
-#ifndef UTILS
-#define UTILS
+#ifndef UTILS_H
+#define UTILS_H
 // #include "constants.h"
 // #include "libs_header.h"
 
 #include <avr/eeprom.h>
-#include "u8g2_constructor.h"
+#include "io_constructor.h"
 #include "constants.h"
 #include "libs_header.h"
 
@@ -35,7 +35,9 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
 {
     uint8_t tmp = ptr;
 
-    if (u8g2.getMenuEvent() == UP)
+    up.tick();
+    down.tick();
+    if (up.isClicked()) // (u8g2.getMenuEvent() == UP)
     {
         if (ptr - 1 < 0)
         {
@@ -49,7 +51,7 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
         }
         tmp = constrain((uint8_t)(ptr - 1), 0, (uint8_t)(items - 1));
     }
-    else if (u8g2.getMenuEvent() == DOWN)
+    else if (down.isClicked())   //else if (u8g2.getMenuEvent() == DOWN)
     {
         if (ptr + 1 > (uint8_t)(items - 1))
         {
@@ -73,12 +75,14 @@ uint8_t leftRight(uint8_t digit)
 {
 
     uint8_t tmp = digit;
+    left.tick();
+    right.tick();
 
-    if (u8g2.getMenuEvent() == LEFT)
+    if (left.isClicked())      // (u8g2.getMenuEvent() == LEFT)
     {
         tmp = constrain(digit - 1, 1, 3);
     }
-    else if (u8g2.getMenuEvent() == RIGHT)
+    else if (right.isClicked())// if (u8g2.getMenuEvent() == RIGHT)
     {
         tmp = constrain(digit + 1, 1, 3);
     }
@@ -90,11 +94,14 @@ uint8_t leftRight(uint8_t curr_pos, uint8_t num_items)
 {
     uint8_t tmp = curr_pos;
 
-    if (u8g2.getMenuEvent() == LEFT)
+    left.tick();
+    right.tick();
+
+    if (left.isClicked())// (u8g2.getMenuEvent() == LEFT)
     {
         tmp = constrain(curr_pos - 1, 1, num_items - 1);
     }
-    else if (u8g2.getMenuEvent() == RIGHT)
+    else if (right.isClicked()) //else if (u8g2.getMenuEvent() == RIGHT)
     {
         tmp = constrain(curr_pos + 1, 1, num_items - 1);
     }
@@ -153,11 +160,14 @@ uint8_t leftRightProg(uint8_t curr_pos, uint8_t num_items)
 {
     uint8_t tmp = curr_pos;
 
-    if (u8g2.getMenuEvent() == LEFT)
+    left.tick();
+    right.tick();
+
+    if (left.isClicked())   //if (u8g2.getMenuEvent() == LEFT)
     {
         tmp = constrain(curr_pos - 1, 0, num_items - 1);
     }
-    else if (u8g2.getMenuEvent() == RIGHT)
+    else if (right.isClicked()) // if (u8g2.getMenuEvent() == RIGHT)
     {
         tmp = constrain(curr_pos + 1, 0, num_items - 1);
     }
@@ -168,11 +178,14 @@ uint8_t upDownProg(uint8_t ptr, uint16_t items)
 {
     uint8_t tmp = ptr;
 
-    if (u8g2.getMenuEvent() == UP)
+    up.tick();
+    down.tick();
+
+    if (up.isClicked())//if (u8g2.getMenuEvent() == UP)
     {
         tmp = constrain((uint8_t)(ptr - 1), 0, (uint8_t)(items - 1));
     }
-    else if (u8g2.getMenuEvent() == DOWN)
+    else if (down.isClicked())  //else if (u8g2.getMenuEvent() == DOWN)
     {
         tmp = constrain((uint8_t)(ptr + 1), 0, (uint8_t)(items - 1));
     }

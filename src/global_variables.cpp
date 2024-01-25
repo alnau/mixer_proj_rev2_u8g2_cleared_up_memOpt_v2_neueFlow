@@ -19,7 +19,7 @@ bool need_sound = true;
 
 // bool need_refresh_speed_menu = false;
 // bool need_refresh_mm = false;
-// bool need_refresh_prog_page = false;
+bool need_refresh_prog_page = false;
 // bool need_refresh_settings = false;
 bool need_to_load_interface = false;
 bool refresh_screen = false;
