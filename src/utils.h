@@ -10,6 +10,8 @@
 #include "constants.h"
 #include "libs_header.h"
 
+
+
 // возвращает true если eeprom инициализируется впервые
 bool check_if_first_init()
 {

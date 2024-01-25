@@ -49,9 +49,9 @@ void prog_data::_init_EEPROM()
 			}
 		}
 		// delay(100);
-#ifdef IS_DEBUG
-		Serial.println(F("EEPROM DATA was initialised"));
-#endif
+
+	debugln(F("EEPROM DATA was initialised"));
+
 	}
 }
 
@@ -59,17 +59,15 @@ void prog_data::_init_EEPROM()
 // prog_num = 1,2...,16
 void prog_data::prog_data::update_mem(uint8_t prog_num, uint8_t point_num)
 {
-#ifdef IS_DEBUG
-	Serial.println(F("Writing to EEPROM... "));
-#endif
+
+	debugln(F("Writing to EEPROM... "));
+
 	int addr = _address_of_point(prog_num, point_num); // посчитаем адрес начала хранения данных, связанных с конкретно точкой
 	for (int i = 0; i < 5; i++)
 	{
 		eeprom_update_word((uint16_t *)(addr + i * sizeof(int16_t)), _prog_info[i]); // и запишем слово (если есть изменения) для всех пяти значений буффера
 	}
-#ifdef IS_DEBUG
-	Serial.println(F("Done"));
-#endif
+	debugln(F("Done"));
 }
 
 // записывает новые значения в буффер (источник данных извне)
@@ -90,11 +88,8 @@ void prog_data::load_data_to_buff(uint8_t prog_num, uint8_t point_num)
 		int addr = _address_of_point(prog_num, point_num);
 		eeprom_read_block(&_prog_info, (void *)addr, sizeof(_prog_info));
 	}
-#ifdef IS_DEBUG
 	else
-
-		Serial.println(F("Error! Check program number and point number"));
-#endif
+		debugln(F("Error! Check program number and point number"));
 }
 
 // выводит текущее содержимое буффера в Serial monitor
@@ -102,7 +97,7 @@ void prog_data::printBuffData()
 {
 #ifdef IS_DEBUG
 	for (uint8_t i = 0; i < 5; i++)
-		Serial.println(_prog_info[i]);
+		debugln(_prog_info[i]);
 #endif
 }
 

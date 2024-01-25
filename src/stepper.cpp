@@ -23,14 +23,14 @@ void startMotor()
 
 
 
-	Serial.println(F("===== Engine started ====="));
-	Serial.print(F("t_accel = ")); Serial.println(md.mem_t_accel);
-	Serial.print(F("t_run = ")); Serial.println(md.mem_t_run);
-	Serial.print(F("t_decel = ")); Serial.println(md.mem_t_decel);
-	Serial.print(F("t_pause = ")); Serial.println(md.mem_t_pause);
-	Serial.print(F("speed = ")); Serial.print(md.mem_speed); Serial.println(F(" RPM"));
-	Serial.print(F("number of cycles = ")); Serial.println(md.mem_n_cycles);
-	Serial.print(F("Rotation regime: "));  (md.mem_is_bidir == true) ? Serial.println(F("Bidirectional")) : Serial.println(F("Unidirectional" ));
+	debugln(F("===== Engine started ====="));
+	debug(F("t_accel = ")); debugln(md.mem_t_accel);
+	debug(F("t_run = ")); debugln(md.mem_t_run);
+	debug(F("t_decel = ")); debugln(md.mem_t_decel);
+	debug(F("t_pause = ")); debugln(md.mem_t_pause);
+	debug(F("speed = ")); debug(md.mem_speed); debugln(F(" RPM"));
+	debug(F("number of cycles = ")); debugln(md.mem_n_cycles);
+	debug(F("Rotation regime: "));  (md.mem_is_bidir == true) ? debugln(F("Bidirectional")) : debugln(F("Unidirectional" ));
 	*/
 
 	uint16_t speed_100 = 10 * PI * CYCLE_DATA.v_const / 3; //(2*3.14*100*RPM)/(60);
@@ -38,27 +38,29 @@ void startMotor()
 	uint16_t accel = speed_100 / CYCLE_DATA.t_accel;
 	uint16_t decel = speed_100 / CYCLE_DATA.t_slowdown;
 
-#ifdef IS_DEBUG
-	Serial.println(F("===== Engine started ====="));
-	Serial.print(F("t_accel = "));
-	Serial.println(cycle_data.t_accel);
-	Serial.print(F("t_run = "));
-	Serial.println(cycle_data.t_const);
-	Serial.print(F("t_decel = "));
-	Serial.println(cycle_data.t_slowdown);
-	Serial.print(F("t_pause = "));
-	Serial.println(cycle_data.t_pause);
-	Serial.print(F("speed = "));
-	Serial.print(cycle_data.v_const);
-	Serial.println(F(" RPM"));
-	Serial.print(F("number of cycles = "));
-	Serial.println(cycle_data.num_cycles);
-	Serial.print(F("Rotation regime: "));
-	(cycle_data.is_bidirectional) ? Serial.println(F("Bidirectional")) : Serial.println(F("Unidirectional"));
 
-	Serial.println(F(""));
-	Serial.print(F(""));
-#endif
+	debugln(F("===== Engine started ====="));
+	debug(F("t_accel = "));
+	debugln(CYCLE_DATA.t_accel);
+	debug(F("t_run = "));
+	debugln(CYCLE_DATA.t_const);
+	debug(F("t_decel = "));
+	debugln(CYCLE_DATA.t_slowdown);
+	debug(F("t_pause = "));
+	debugln(CYCLE_DATA.t_pause);
+	debug(F("speed = "));
+	debug(CYCLE_DATA.v_const);
+	debugln(F(" RPM"));
+	debug(F("number of cycles = "));
+	debugln(CYCLE_DATA.num_cycles);
+	debug(F("Rotation regime: "));
+	#ifdef IS_DEBUG
+	(CYCLE_DATA.is_bidirectional) ? debugln(F("Bidirectional")) : debugln(F("Unidirectional"));
+	#endif
+
+	debugln(F(""));
+	debug(F(""));
+
 
 	move(step, accel, decel, speed_100, CYCLE_DATA.t_pause, CYCLE_DATA.num_cycles, CYCLE_DATA.is_bidirectional);
 }
@@ -146,9 +148,8 @@ void move(int32_t step, uint16_t accel, uint16_t decel, uint16_t speed, uint16_t
 
 		srd.run_state = ACCEL;
 
-#ifdef IS_DEBUG
-		Serial.println(F("ACCEL"));
-#endif
+
+		debugln(F("ACCEL"));
 
 		// Обновим счетчик
 		srd.accel_count = 0;
@@ -176,9 +177,8 @@ void initTimer1(void)
 	// Timer/Counter 1 Output Compare A Match Interrupt enable.
 	TIMSK1 = (1 << OCIE1A);
 
-#ifdef IS_DEBUG
-	Serial.println(F("STOP"));
-#endif
+
+	debugln(F("STOP"));
 }
 
 /*! \brief Прерывание, которое триггерится по таймеру
@@ -210,9 +210,8 @@ ISR(TIMER1_COMPA_vect)
 	{
 		// Если востанавливаем состояние рампы после нежелательного перезапуска
 		restoreRampState();
-#ifdef IS_DEBUG
-		Serial.println(F("Data loaded succesfully"));
-#endif
+
+		debugln(F("Data loaded succesfully"));
 
 		is_restoring = false;
 
@@ -259,9 +258,8 @@ ISR(TIMER1_COMPA_vect)
 
 			srd.run_state = DECEL;
 
-#ifdef IS_DEBUG
-			Serial.println(F("DECEL"));
-#endif
+			debugln(F("DECEL"));
+
 
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			// логика такая, что для достижения фиксированной скорости n1*a1 = n2*a2, т.е. n_decel = n_accel*(a2/a1)
@@ -287,9 +285,7 @@ ISR(TIMER1_COMPA_vect)
 
 				srd.run_state = RUN;
 
-#ifdef IS_DEBUG
-				Serial.println(F("RUN"));
-#endif
+				debugln(F("RUN"));
 			}
 		}
 		break;
@@ -303,9 +299,7 @@ ISR(TIMER1_COMPA_vect)
 
 			srd.run_state = DECEL;
 
-#ifdef IS_DEBUG
-			Serial.println(F("DECEL"));
-#endif
+			debugln(F("DECEL"));
 
 			// далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			srd.accel_count = -(long)srd.speed * srd.speed / (long)(((long)A_x20000 * USER_DECEL) / 100);
@@ -326,9 +320,7 @@ ISR(TIMER1_COMPA_vect)
 				new_step_delay = last_accel_delay;
 				srd.run_state = DECEL;
 
-#ifdef IS_DEBUG
-				Serial.println(("DECEL"));
-#endif
+				debugln(("DECEL"));
 				// rest=0;
 			}
 		}
@@ -344,16 +336,15 @@ ISR(TIMER1_COMPA_vect)
 
 			srd.run_state = DECEL;
 
-#ifdef IS_DEBUG
-			Serial.println(F("DECEL"));
-#endif
+
+			debugln(F("DECEL"));
 
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			// логика такая, что для достижения фиксированной скорости n1*a1 = n2*a2, т.е. n_decel1 = n_decel2 * (a2/a1)
 			// Здесь не уверен. Оставшееся число шагов =-srd.accel_count, т.е. работать нужно не со step_count, а именно с ним
 			srd.accel_count = ((long)srd.accel_count * srd.decel) / USER_DECEL;
 
-			// Serial.println(srd.accel_count);
+			// debugln(srd.accel_count);
 			new_step_delay = srd.step_delay; // Делаем еще один
 		}
 		else
@@ -371,9 +362,7 @@ ISR(TIMER1_COMPA_vect)
 					// Если пользователь закончил работу и мы закончили тормозить, то останавливаем все рассчеты
 					srd.run_state = STOP;
 
-#ifdef IS_DEBUG
-					Serial.println(F("STOP"));
-#endif
+					debugln(F("STOP"));
 
 					is_working = false;
 					refresh_screen = true;
@@ -387,9 +376,8 @@ ISR(TIMER1_COMPA_vect)
 						{
 							// Если после этого не осталось циклов, то тормозим
 							srd.run_state = STOP;
-#ifdef IS_DEBUG
-							Serial.println(F("STOP"));
-#endif
+							debugln(F("STOP"));
+
 							digitalWrite(ENA_PIN, HIGH);
 							is_working = false;
 							refresh_screen = true;
@@ -414,10 +402,7 @@ ISR(TIMER1_COMPA_vect)
 							step_count = 0;
 							srd.accel_count = 0;
 							srd.run_state = ACCEL;
-
-#ifdef IS_DEBUG
-							Serial.println(F("ACCEL"));
-#endif
+							debugln(F("ACCEL"));
 
 							OCR1A = new_step_delay; // На всякий случай
 						}
@@ -427,10 +412,8 @@ ISR(TIMER1_COMPA_vect)
 
 						// Запускаем паузу, и перенесем все рассчеты нового цикла в нее
 						srd.run_state = PAUSE;
+						debugln(F("PAUSE"));
 
-#ifdef IS_DEBUG
-						Serial.println(F("PAUSE"));
-#endif
 						// Перейдем в режим паузы и каждую секунду будем триггерить прерывание, пока не истечет необходимое время
 						noInterrupts(); // Отключаем прерывания
 
@@ -458,10 +441,8 @@ ISR(TIMER1_COMPA_vect)
 			// Если пользователю нужно остановить работу во время паузы
 			need_to_stop = false;
 			srd.run_state = STOP;
+			debugln(F("STOP"));
 
-#ifdef IS_DEBUG
-			Serial.println(F("STOP"));
-#endif
 
 			digitalWrite(ENA_PIN, HIGH);
 			is_working = false;
@@ -479,10 +460,8 @@ ISR(TIMER1_COMPA_vect)
 				{
 					// Если после этого не осталось циклов, то тормозим
 					srd.run_state = STOP;
+					debugln(F("STOP"));
 
-#ifdef IS_DEBUG
-					Serial.println(F("STOP"));
-#endif
 					digitalWrite(ENA_PIN, HIGH);
 					is_working = false;
 					refresh_screen = true;
@@ -502,15 +481,12 @@ ISR(TIMER1_COMPA_vect)
 					}
 					// Логика запуска цикла по-новой
 					new_step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / srd.accel)) / 100;
-					// Serial.println(new_step_delay);
+					// debugln(new_step_delay);
 					rest = 0;
 					step_count = 0;
 					srd.accel_count = 0;
 					srd.run_state = ACCEL;
-
-#ifdef IS_DEBUG
-					Serial.println(F("ACCEL"));
-#endif
+					debugln(F("ACCEL"));
 
 					noInterrupts();
 					TCCR1A = 0;
@@ -565,68 +541,67 @@ void doTheFStep(uint8_t dir)
 	digitalWrite(STEP_PIN, LOW);
 }
 
-#ifdef IS_DEBUG
 void printRampData()
 {
 
-	Serial.print(F("run_state: "));
-	Serial.println(srd.run_state);
-	Serial.print(F("dir: "));
-	Serial.println(srd.dir);
-	Serial.print(F("speed: "));
-	Serial.println(srd.speed);
-	Serial.print(F("step_delay: "));
-	Serial.println(srd.step_delay);
-	Serial.print(F("decel_start: "));
-	Serial.println(srd.decel_start);
-	Serial.print(F("decel_val: "));
-	Serial.println(srd.decel_val);
-	Serial.print(F("min_delay: "));
-	Serial.println(srd.min_delay);
-	Serial.print(F("accel_count: "));
-	Serial.println(srd.accel_count);
-	Serial.print(F("accel: "));
-	Serial.println(srd.accel);
-	Serial.print(F("decel: "));
-	Serial.println(srd.decel);
-	Serial.print(F("n_cycles: "));
-	Serial.println(srd.n_cycles);
-	Serial.print(F("is_bidir: "));
-	Serial.println((bool)srd.is_bidir);
-	Serial.print(F("t_pause: "));
-	Serial.println(srd.t_pause);
+	debug(F("run_state: "));
+	debugln(srd.run_state);
+	debug(F("dir: "));
+	debugln(srd.dir);
+	debug(F("speed: "));
+	debugln(srd.speed);
+	debug(F("step_delay: "));
+	debugln(srd.step_delay);
+	debug(F("decel_start: "));
+	debugln(srd.decel_start);
+	debug(F("decel_val: "));
+	debugln(srd.decel_val);
+	debug(F("min_delay: "));
+	debugln(srd.min_delay);
+	debug(F("accel_count: "));
+	debugln(srd.accel_count);
+	debug(F("accel: "));
+	debugln(srd.accel);
+	debug(F("decel: "));
+	debugln(srd.decel);
+	debug(F("n_cycles: "));
+	debugln(srd.n_cycles);
+	debug(F("is_bidir: "));
+	debugln((bool)srd.is_bidir);
+	debug(F("t_pause: "));
+	debugln(srd.t_pause);
 }
 
 void printRampDataEEPROM()
 {
-	Serial.print(F("run_state: "));
-	Serial.println(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE));
-	Serial.print(F("dir: "));
-	Serial.println(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 1));
-	Serial.print(F("speed: "));
-	Serial.println(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 2));
-	Serial.print(F("step_delay: "));
-	Serial.println(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 4));
-	Serial.print(F("decel_start: "));
-	Serial.println(eeprom_read_dword((uint32_t *)RAMP_FIRST_BYTE + 6));
-	Serial.print(F("decel_val: "));
-	Serial.println(eeprom_read_dword((int32_t *)RAMP_FIRST_BYTE + 10));
-	Serial.print(F("min_delay: "));
-	Serial.println(eeprom_read_word((int16_t *)RAMP_FIRST_BYTE + 14));
-	Serial.print(F("accel_count: "));
-	Serial.println(eeprom_read_dword((int32_t *)RAMP_FIRST_BYTE + 16));
-	Serial.print(F("accel: "));
-	Serial.println(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 20));
-	Serial.print(F("decel: "));
-	Serial.println(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 22));
-	Serial.print(F("n_cycles: "));
-	Serial.println(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 24));
-	Serial.print(F("is_bidir: "));
-	Serial.println((bool)eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 25));
-	Serial.print(F("t_pause: "));
-	Serial.println(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 26));
+	debug(F("run_state: "));
+	debugln(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE));
+	debug(F("dir: "));
+	debugln(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 1));
+	debug(F("speed: "));
+	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 2));
+	debug(F("step_delay: "));
+	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 4));
+	debug(F("decel_start: "));
+	debugln(eeprom_read_dword((uint32_t *)RAMP_FIRST_BYTE + 6));
+	debug(F("decel_val: "));
+	debugln(eeprom_read_dword((int32_t *)RAMP_FIRST_BYTE + 10));
+	debug(F("min_delay: "));
+	debugln(eeprom_read_word((int16_t *)RAMP_FIRST_BYTE + 14));
+	debug(F("accel_count: "));
+	debugln(eeprom_read_dword((int32_t *)RAMP_FIRST_BYTE + 16));
+	debug(F("accel: "));
+	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 20));
+	debug(F("decel: "));
+	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 22));
+	debug(F("n_cycles: "));
+	debugln(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 24));
+	debug(F("is_bidir: "));
+	debugln((bool)eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 25));
+	debug(F("t_pause: "));
+	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 26));
 }
-#endif
+
 
 void restoreRampState()
 {
@@ -666,15 +641,15 @@ void saveRampState(uint32_t step_count, uint32_t rest, uint16_t last_accel_delay
 	  eeprom_update_word((uint16_t *)(RAMP_FIRST_BYTE+26), srd.t_pause);
 	*/
 	eeprom_write_block((void *)&srd, (uint16_t *)RAMP_FIRST_BYTE, sizeof(srd));
-#ifdef IS_DEBUG
-	Serial.println(F("Ramp data has been saved"));
-	Serial.println(F("===== Data from EEPROM ====="));
+
+	debugln(F("Ramp data has been saved"));
+	debugln(F("===== Data from EEPROM ====="));
 	printRampDataEEPROM();
-	Serial.println(F(""));
-	Serial.println(F(""));
-	Serial.println(F("===== Actual data ====="));
+	debugln(F(""));
+	debugln(F(""));
+	debugln(F("===== Actual data ====="));
 	printRampData();
-#endif
+
 }
 
 /*! \brief Square root routine.

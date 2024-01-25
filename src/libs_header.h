@@ -8,6 +8,15 @@
 
 #include <Arduino.h>
 #include <avr/eeprom.h>
+
+#ifdef IS_DEBUG
+  #define debug(x) Serial.print(x)
+  #define debugln(x)  Serial.println(x)
+#else
+  #define debug(x)
+  #define debugln(x)
+#endif
+
 // #include <avr/io.h>
 // #include <avr/interrupt.h>
 // #include <avr/eeprom.h>

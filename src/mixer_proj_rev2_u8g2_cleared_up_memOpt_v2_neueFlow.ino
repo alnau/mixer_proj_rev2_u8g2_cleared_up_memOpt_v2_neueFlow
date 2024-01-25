@@ -1,3 +1,7 @@
+
+
+
+
 #include "constants.h"
 #include "libs_header.h"
 #include "utils.h"
@@ -9,6 +13,8 @@
 
 
 //#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
+
+
 
 //#define IS_DEBUG
 void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
@@ -38,9 +44,9 @@ void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
 void initData() {
   if (check_if_first_init()) {
     //если устройство запускается впервые
-#ifdef IS_DEBUG
-    Serial.println(F("First start"));
-#endif
+
+    debugln(F("First start"));
+
     //установили дефолтные настройки
     CYCLE_DATA.t_accel = 10;              //s
     CYCLE_DATA.v_const = 150;             //rev/min
@@ -103,13 +109,11 @@ void powerLoss() {
     bitWrite(eeprom_0x00, 1, 1);                            //установили флаг аварийной остановки
     //eeprom_0x00 = setBit(eeprom_0x00, working_in_programming_mode, 4);  //записали из какого режима велась работа
     eeprom_update_byte(0, eeprom_0x00);
-#ifdef IS_DEBUG
-    Serial.println(F("Emergency stop byte is set. Saving ramp state..."));
-#endif
+
+    debugln(F("Emergency stop byte is set. Saving ramp state..."));
     interrupts();
-#ifdef IS_DEBUG
-    Serial.print(F("Settings EEPROM Data: ")); Serial.println(eeprom_read_byte(0));
-#endif    
+    debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
+
     return;
   } 
   else
@@ -141,9 +145,7 @@ void setup() {
   pinMode(PWR_LOSS, INPUT); //Не обязательно, т.к. все пины по умолчанию работают как INPUT
   //attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
 
-#ifdef IS_DEBUG
-  Serial.print(F("Settings EEPROM Data: ")); Serial.println(eeprom_read_byte(0)); 
-#endif
+  debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
 
 
@@ -154,9 +156,7 @@ void setup() {
 void checkEmergencyStop() {
   //emergency_stop = true;
   if (emergency_stop) {
-#ifdef IS_DEBUG
-    Serial.println(F("Inside emergency handler"));
-#endif
+    debugln(F("Inside emergency handler"));
     //По идее, это закинет нас в врерывание ISR(TIMER1_COMPA_vect), где произойдет процесс востановления режима работы
     is_restoring = true;
     OCR1A = 10;
@@ -1271,10 +1271,10 @@ void settings() {
       // case 0: need_sound = setupSound(); break;
       // case 1: safe_stop = setupSafeStop(); break;
       menu_ptr = settings_cursor + 14;
-#ifdef IS_DEBUG
-      case 2: Serial.println(F("Данные1")); break;
-      case 3: Serial.println(F("Данные2")); break;
-#endif
+
+      case 2: debugln(F("Данные1")); break;
+      case 3: debugln(F("Данные2")); break;
+
     }
   }
 
@@ -1287,9 +1287,8 @@ void settings() {
   if ((tmp_ptr == 4) and (settings_cursor == 3)) {
     //переход со второй страницы на первую
     u8g2.clear();
-#ifdef IS_DEBUG
-    Serial.println(F("2->1"));
-#endif
+
+    debugln(F("2->1"));
     printSettingsPages(settings_cursor);
     printSettingsData(settings_cursor);
     printPtr(settings_cursor % 4);
@@ -1299,9 +1298,9 @@ void settings() {
   } else if ((tmp_ptr == 3) and (settings_cursor == 4)) {
     //переход с первой на вторую
     u8g2.clear();
-#ifdef IS_DEBUG
-    Serial.println(F("1->2"));
-#endif
+
+    debugln(F("1->2"));
+
     printSettingsPages(settings_cursor);
     printSettingsData(settings_cursor);
     printPtr(settings_cursor % 4);
@@ -1396,17 +1395,15 @@ void printSettingsData(uint8_t settings_ptr) {
 //обновение настроек, записанных в энергонезависимой памяти
 void refreshSettings() {
   uint8_t tmp = eeprom_read_byte((uint8_t*)0);
-#ifdef IS_DEBUG
-  Serial.print(tmp, BIN);
-  Serial.print(F(" --> "));
-#endif
+
+  debug(tmp);
+  debug(F(" --> "));
+
   bitWrite(tmp, 2, need_sound);
   bitWrite(tmp, 5, safe_stop);
   eeprom_update_byte((uint8_t*)0, tmp);
-#ifdef IS_DEBUG
-  Serial.println(tmp, BIN);
-  Serial.println(F("Settings updated"));
-#endif
+  debugln(tmp);
+  debugln(F("Settings updated"));
 }
 
 // НЕ РЕНДЕРЕР
