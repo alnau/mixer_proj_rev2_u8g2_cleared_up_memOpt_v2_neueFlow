@@ -47,7 +47,7 @@
 #define SETUP_SOUND 14
 #define SETUP_SAFE_STOP 15
 #define SEND_DATA 16
-#define RECIEVE_DATA
+#define RECIEVE_DATA 17
 
 //==== Пины мотора ====
 // Пин шага. Переход в HIGH делает шаг

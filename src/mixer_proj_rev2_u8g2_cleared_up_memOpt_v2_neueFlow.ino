@@ -21,12 +21,12 @@ void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
 // #define EB_NO_CALLBACK
 // #define EB_NO_FOR
 
-// Button up(UP_BTN);
-// Button down(DOWN_BTN);
-// Button right(RIGHT_BTN);
-// Button left(LEFT_BTN);
-// Button enter(ENTER_BTN);
-// Button func(FUNC_BTN);
+Button up(UP_BTN);
+Button down(DOWN_BTN);
+Button right(RIGHT_BTN);
+Button left(LEFT_BTN);
+Button enter(ENTER_BTN);
+Button func(FUNC_BTN);
 
 
 
@@ -87,6 +87,7 @@ void initDisplay() {
 
 
   u8g2.begin(/* menu_select_pin= */ ENTER_BTN, /* menu_next_pin= */ RIGHT_BTN, /* menu_prev_pin= */ LEFT_BTN, /* menu_up_pin= */ UP_BTN, /* menu_down_pin= */ DOWN_BTN, /* menu_home_pin= */ FUNC_BTN);
+  //u8g2.begin();
   u8g2.setContrast(0);
   u8g2.enableUTF8Print();
   u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
@@ -205,8 +206,9 @@ void checkEmergencyStop() {
         u8g2.updateDisplay();
         last_update_time = (uint16_t)millis();
       }
-
-      if (u8g2.getMenuEvent() == ENTER) {
+	  enter.tick();
+      if (enter.click()) {
+	  //if (u8g2.getMenuEvent() == ENTER) {
         u8g2.setContrast(0);
         noTone(BUZZER);
         emergency_stop = false;
@@ -253,7 +255,10 @@ void mainMenu() {
 
   
   //основной процесс в меню
-  if (u8g2.getMenuEvent() == ENTER) {
+  enter.tick();
+  func.tick();
+  if (enter.click()) {
+  //if (u8g2.getMenuEvent() == ENTER) {
     refresh_screen = true;
     need_to_load_interface = true;
     switch (main_menu_ptr) {
@@ -262,7 +267,8 @@ void mainMenu() {
       case 2: menu_ptr = SETTINGS; break;
     }
   }
-  else if (u8g2.getMenuEvent() == FUNC) {
+  else if(func.click()) {
+  //else if (u8g2.getMenuEvent() == FUNC) {
     menu_ptr = SPEED;
     need_to_load_interface = true;
     return;
@@ -372,7 +378,9 @@ void speed_menu() {
       refresh_screen = true;
     }   
   }
-  if ((u8g2.getMenuEvent() == ENTER) and !is_working) {
+  enter.tick();
+  if (enter.click() and !is_working) {
+  //if ((u8g2.getMenuEvent() == ENTER) and !is_working) {
 
     if (!need_to_stop) {
       // if (working_in_programming_mode) {
@@ -389,8 +397,10 @@ void speed_menu() {
     }
     //enter.clear();
   }
-
-  if (u8g2.getMenuEvent() == ENTER) {
+  enter.tick();
+  func.tick();
+  if (enter.click()) {
+  //if (u8g2.getMenuEvent() == ENTER) {
     if (is_working and !need_to_stop) {
       //Если двигатель работал и пользователю необходимо его остановить
       need_to_stop = true;  //Установим флаг, который будет обрабатываться в прерывании motor_cntr.c
@@ -398,7 +408,8 @@ void speed_menu() {
     }
     //enter.clear();
   }
-  else if (u8g2.getMenuEvent() == FUNC) {
+  else if (func.click()) {
+  //else if (u8g2.getMenuEvent() == FUNC) {
     //если пользователь нажал на настройку,выкидываем его в главное меню, при этом продолжая работу в прерываниях
     //mainMenu();
     menu_ptr = MAIN;
@@ -523,8 +534,9 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
 
 
 
-  
-  if (u8g2.getMenuEvent() ==ENTER) {
+  enter.tick();
+  if (enter.click()) {
+  //if (u8g2.getMenuEvent() ==ENTER) {
     printTime(tmp, ptr, false, 0);
     u8g2.updateDisplay();
     //T = tmp;
@@ -539,8 +551,10 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
     printTime(tmp, ptr, true, digit);
     u8g2.updateDisplay();
   }
-
-  if (u8g2.getMenuEvent() == UP) {
+  up.tick();
+  down.tick();
+  if (up.click()) {
+  //if (u8g2.getMenuEvent() == UP) {
 
     //если минуты
     if (digit == 1) {
@@ -557,7 +571,8 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
     printTime(tmp, ptr, true, digit);
     u8g2.updateDisplay();
   }
-  else if (u8g2.getMenuEvent() == DOWN) {
+  else if (down.click()) {
+  //else if (u8g2.getMenuEvent() == DOWN) {
     //printTime(tmp, ptr, true, digit);
     //если минуты
     if (digit == 1) {
@@ -712,8 +727,9 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
 
   
 
-
-    if (u8g2.getMenuEvent() == ENTER) {
+    enter.tick();
+    if (enter.click())  {
+    //if (u8g2.getMenuEvent() == ENTER) {
       printNumbers(tmp, ptr);
       u8g2.updateDisplay();
       data = tmp;
@@ -730,8 +746,11 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
     }
 
     printNumbers(tmp, ptr, true, digit);
-
-    if (u8g2.getMenuEvent() == UP) {
+    
+    up.tick();
+    down.tick();
+    if (up.click()) {
+    //if (u8g2.getMenuEvent() == UP) {
       //если сотни
       if (digit == 1) {
         tmp = constrain(tmp + 100, 0, MAX_NUM);
@@ -747,7 +766,8 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
       printNumbers(tmp, ptr, true, digit);
       u8g2.updateDisplay();
     }
-    else if (u8g2.getMenuEvent() == DOWN) {
+    if (down.click()) {
+    //else if (u8g2.getMenuEvent() == DOWN) {
       //если сотни
       if (digit == 1) {
         tmp = constrain(tmp - 100, 0, MAX_NUM);
@@ -906,14 +926,20 @@ bool setupAccel() {
   
   
 
-  
-    if (u8g2.getMenuEvent() == ENTER) {
+    enter.tick();
+    up.tick();
+    down.tick();
+
+    
+    if (enter.click())  {
+    //if (u8g2.getMenuEvent() == ENTER) {
       printAccelRegime(tmp, false);
       u8g2.updateDisplay();
       need_to_load_interface = true;
       menu_ptr = CYCLE;
     }
-    else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
+    else if (up.click() or down.click())  {
+    //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp = !tmp;
       printAccelRegime(tmp, true);
       u8g2.updateDisplay();
@@ -925,22 +951,33 @@ bool setupAccel() {
 //установка режима повторения
 // НЕ РЕНДЕРЕР
 bool setupRepeat() {
-  printCycleRegime(CYCLE_DATA.is_bidirectional, true);
-  u8g2.updateDisplay();
-  bool tmp = CYCLE_DATA.is_bidirectional;
+  static bool tmp;
 
-  while (1) {
-    if (u8g2.getMenuEvent() == ENTER) {
+  if (need_to_load_interface) {
+    printCycleRegime(CYCLE_DATA.is_bidirectional, true);
+    u8g2.updateDisplay();
+    tmp = CYCLE_DATA.is_bidirectional;
+    need_to_load_interface = false; 
+  }
+
+    enter.tick();
+    up.tick();
+    down.tick();
+    if (enter.click()) {
+    //if (u8g2.getMenuEvent() == ENTER) {
+      need_to_load_interface = true;
       printCycleRegime(tmp, false);
       u8g2.updateDisplay();
+      menu_ptr = CYCLE;
       return tmp;
     }
-    else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
+    else if (up.click() or down.click()) {
+    //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp = !tmp;
       printCycleRegime(tmp, true);
       u8g2.updateDisplay();
     }
-  }
+  
 }
 
 
@@ -995,12 +1032,16 @@ void setupCycle() {
   
 
   // Основной процесс рендеринга менюшки
-  if (u8g2.getMenuEvent() == FUNC) {
+  enter.tick();
+  func.tick();
+  if (func.click()) {
+  //if (u8g2.getMenuEvent() == FUNC) {
     need_to_load_interface = true;
     menu_ptr = MAIN;
     return;
   }
-  else if ((u8g2.getMenuEvent() == ENTER) and !is_working) {
+  else if (enter.click() and !is_working) {
+  //else if ((u8g2.getMenuEvent() == ENTER) and !is_working) {
     need_update = true;
     need_to_load_interface = true;
     // switch (setup_ptr) {
@@ -1199,13 +1240,16 @@ void settings() {
     need_to_load_interface = false;
   }
 
-  
-  if (u8g2.getMenuEvent() == FUNC) {
+  func.tick();
+  enter.tick();
+  if (func.click()) {
+  //if (u8g2.getMenuEvent() == FUNC) {
     need_to_load_interface = true;
     menu_ptr = MAIN;
     return;
   }
-  else if (u8g2.getMenuEvent() == ENTER) {
+  else if (enter.click()) {
+  //else if (u8g2.getMenuEvent() == ENTER) {
     refresh_screen = true;
     need_to_load_interface = true;
     switch (settings_cursor) {
@@ -1361,15 +1405,19 @@ bool setupSafeStop() {
 
 
 
-  
-    if (u8g2.getMenuEvent()==ENTER ) {
+    enter.tick();
+    up.tick();
+    down.tick();
+    if (enter.click()) {
+    //if (u8g2.getMenuEvent()==ENTER ) {
       printSafeStopStatus(tmp_safe_stop, false);
       u8g2.updateDisplay();
       need_to_load_interface = true;
       menu_ptr = SETTINGS;
       return tmp_safe_stop;
     }
-    else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
+    else if(up.click() or down.click()) {
+    //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp_safe_stop = !tmp_safe_stop;
       printSafeStopStatus(tmp_safe_stop, true);
       u8g2.updateDisplay();
@@ -1391,15 +1439,19 @@ bool setupSound() {
   }
 
 
-  
-    if (u8g2.getMenuEvent() == ENTER) {
+    enter.tick();
+    up.tick();
+    down.tick();
+    if (enter.click()) {
+    //if (u8g2.getMenuEvent() == ENTER) {
       printSoundStatus(tmp_need_sound, false);
       u8g2.updateDisplay();
       menu_ptr = SETTINGS;
       need_to_load_interface = true;
       return tmp_need_sound;
     }
-    else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
+    else if (up.click() or down.click()) {
+    //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp_need_sound = !tmp_need_sound;
       printSoundStatus(tmp_need_sound, true);
       u8g2.updateDisplay();
@@ -1414,7 +1466,7 @@ void printPtr(uint8_t ptr) {
   u8g2.setDrawColor(0);
   u8g2.drawBox(0, 0, 4, SCREEN_HEIGHT);
   u8g2.setDrawColor(1);
-  u8g2.setCursor(0, ptr * 8 + 8);
+  u8g2.setCursor(0, ptr * 16 + 4 + 8);
   u8g2.print(F(">"));
 }
 
@@ -1505,10 +1557,10 @@ void loop() {
       need_to_load_interface = true;
       break;
 
-    // case RECIEVE_DATA:
-    //   menu_ptr = SETTINGS;
-    //   need_to_load_interface = true;
-    //   break;
+    case RECIEVE_DATA:
+      menu_ptr = SETTINGS;
+      need_to_load_interface = true;
+      break;
 
       
   }
