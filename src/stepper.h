@@ -71,3 +71,4 @@ void printRampData();
 void printRampDataEEPROM();
 void restoreRampState();
 void saveRampState(uint32_t step_count, uint32_t rest, uint16_t last_accel_delay);
+uint32_t stoppingRoutine(uint32_t counter);

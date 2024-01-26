@@ -17,6 +17,10 @@
   #define debugln(x)
 #endif
 
+#ifdef U8X8_HAVE_HW_SPI
+#include <SPI.h>
+#endif
+
 // #include <avr/io.h>
 // #include <avr/interrupt.h>
 // #include <avr/eeprom.h>

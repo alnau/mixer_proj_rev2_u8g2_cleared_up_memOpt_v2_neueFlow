@@ -186,25 +186,25 @@ void checkEmergencyStop() {
     while (1) {
       //МЕРЦАЙ ЭКРАНОМ И ОРИ
       if ((uint16_t)millis() - last_update_time > 500) {
-        if (is_lit) {
-          u8g2.setContrast(70);
-          is_lit = false;
-        } else {
-          // if (need_sound) {
-          //   tone(BUZZER, BUZZER_PITCH, 100);
-          // }
-          u8g2.setContrast(0);
-          is_lit = true;
-        }
+        // if (is_lit) {
+        //   //u8g2.setContrast(70);
+        //   is_lit = false;
+        // } else {
+        //   // if (need_sound) {
+        //   //   tone(BUZZER, BUZZER_PITCH, 100);
+        //   // }
+        //   //u8g2.setContrast(0);
+        //   is_lit = true;
+        // }
         u8g2.setCursor(0, 8);
         u8g2.print(F(" Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
         u8g2.updateDisplay();
         last_update_time = (uint16_t)millis();
       }
-	  enter.tick();
+	    enter.tick();
       if (enter.isClicked()) {
 	  //if (u8g2.getMenuEvent() == ENTER) {
-        u8g2.setContrast(0);
+        //u8g2.setContrast(0);
         //noTone(BUZZER);
         emergency_stop = false;
         uint8_t tmp = eeprom_read_byte((uint8_t*)0);
@@ -254,7 +254,7 @@ void mainMenu() {
   func.tick();
   if (enter.isClicked()) {
   //if (u8g2.getMenuEvent() == ENTER) {
-    refresh_screen = true;
+    //refresh_screen = true;
     need_to_load_interface = true;
     switch (main_menu_ptr) {
       case 0: menu_ptr = CYCLE; break;
@@ -282,22 +282,22 @@ void mainMenu() {
     u8g2.clear();
     printMainMenu();
     printPtr(main_menu_ptr);
-    u8g2.updateDisplay();
-    refresh_screen = false;
+    //u8g2.updateDisplay();
+    //refresh_screen = false;
   }
 
 }
 
 
-//выводит предупреждение и спрашивает точно ли пользователь хочет остановить работу
-//РЕНДЕРЕР
-void printStopWarning() {
-  u8g2.clear();
-  u8g2.setCursor(0, 8);
-  u8g2.print(F("Зажмите левую и прав-ую стрелки одноврем-\n\rенно если действит-\n\rельно хотите \n\rостановить процесс"));
-  refresh_screen = true;
-  //u8g2.updateDisplay();
-}
+// //выводит предупреждение и спрашивает точно ли пользователь хочет остановить работу
+// //РЕНДЕРЕР
+// void printStopWarning() {
+//   u8g2.clear();
+//   u8g2.setCursor(0, 8);
+//   u8g2.print(F("Зажмите левую и прав-ую стрелки одноврем-\n\rенно если действит-\n\rельно хотите \n\rостановить процесс"));
+//   refresh_screen = true;
+//   //u8g2.updateDisplay();
+// }
 
 //Выводит текущую скорость
 //НЕ РЕНДЕРЕР
@@ -308,17 +308,17 @@ void printSpeedMenu(uint8_t speed, bool is_working) {
   uint8_t order = calculateOrder(speed);
   u8g2.clear();
   //раньше использовал u8g2_font_6x12_t_cyrillic
-  u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
+  //u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
   u8g2.setCursor(5, 18);
   if (is_working)
     u8g2.print(F("вкл"));
   else
     u8g2.print(F("выкл"));
 
-  if (srd.dir == CCW) {
-    //считаем вращение против часовой отрицательным
-    u8g2.drawBox(5 + (3 - order) * u8g2.getMaxCharWidth() + 8 - 20, 8 * start_row_y - 4 + 19, 7, 3);
-  }
+  // if (srd.dir == CCW) {
+  //   //считаем вращение против часовой отрицательным
+  //   u8g2.drawBox(5 + (3 - order) * u8g2.getMaxCharWidth() + 8 - 20, 8 * start_row_y - 4 + 19, 7, 3);
+  // }
   u8g2.setCursor(5 + (3 - order) * u8g2.getMaxCharWidth() + 8-10, 8 * start_row_y + 26);
 
   //был u8g2_font_inr24_t_cyrillic
@@ -370,9 +370,10 @@ void speed_menu() {
     // RPM = w/(2*pi)*60 [об/мин]
     speed = (uint8_t)((30*ALPHA*T1_FREQ)/(3.14159*srd.step_delay));
 
-    if (prev_speed != speed) {
+    if ((prev_speed != speed) and ((uint16_t)millis() - t_since_last_update > 200)) {
       prev_speed = speed;
       refresh_screen = true;
+      t_since_last_update = (uint16_t)millis();
     }   
   }
   enter.tick();
@@ -414,14 +415,6 @@ void speed_menu() {
     refresh_screen = true;
     return;
   }
-
-  if (((uint16_t)millis() - t_since_last_update > 200) /*and (need_refresh_speed_menu)*/){
-    printSpeedMenu(speed, is_working);
-    //u8g2.updateDisplay();
-    refresh_screen = true;
-    t_since_last_update = (uint16_t)millis();
-  }
-
 }
 
 
@@ -1099,8 +1092,7 @@ void setupCycle() {
     strcpy_P(buffer, pstr);
 
     counter = scrollText(buffer, setup_ptr % 4, counter);
-    printPtr(setup_ptr - 4);
-    printScrollBar(setup_ptr, SETUP_ITEMS);
+
     printSetupData(7);
     curr_page = 1;
     refresh_screen = true;
@@ -1115,8 +1107,7 @@ void setupCycle() {
     strcpy_P(buffer, pstr);
 
     counter = scrollText(buffer, setup_ptr % 4, counter);
-    printPtr(setup_ptr);
-    printScrollBar(setup_ptr, SETUP_ITEMS);
+
     printSetupData(0);
     curr_page = 0;
     refresh_screen = true;
@@ -1128,8 +1119,6 @@ void setupCycle() {
     strcpy_P(buffer, pstr);
 
     counter = scrollText(buffer, setup_ptr % 4, counter);
-    printPtr(setup_ptr % 4);
-    printScrollBar(setup_ptr, SETUP_ITEMS);
     if (refresh_screen) {
       clearMenuItem(tmp_ptr);
       PGM_P pstr = pgm_read_word(setup_menu_items + tmp_ptr);
@@ -1139,9 +1128,12 @@ void setupCycle() {
       refreshMenuItem(buffer, tmp_ptr);  //вернули текст эл-та который только что скролили в нормальное состояние
       
       //u8g2.updateDisplay();
-      refresh_screen = true;
+      //refresh_screen = true;
     }
   }
+  //counter = scrollText(buffer, setup_ptr % 4, counter);
+  printPtr(setup_ptr%4);
+  printScrollBar(setup_ptr, SETUP_ITEMS);
 
 }
 
@@ -1223,7 +1215,7 @@ void printSettingsPages(uint8_t cursor) {
       char buffer[strlen_P(pstr)+1];
       strcpy_P(buffer, pstr);
 
-      u8g2.setCursor(8, 4 + 16 * (i - 4));
+      u8g2.setCursor(8, 4 + 16 * (i - 4) + 8);
       u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN));
     }
   }
@@ -1303,8 +1295,8 @@ void settings() {
 
     printSettingsPages(settings_cursor);
     printSettingsData(settings_cursor);
-    printPtr(settings_cursor % 4);
-    printScrollBar(settings_cursor, SETTINGS_ITEMS);
+    //printPtr(settings_cursor % 4);
+    //printScrollBar(settings_cursor, SETTINGS_ITEMS);
     refresh_screen = true;
     //u8g2.updateDisplay();
   } else if (tmp_ptr != settings_cursor) {
@@ -1316,19 +1308,22 @@ void settings() {
     strcpy_P(buffer, pstr);
 
     refreshMenuItem(buffer, tmp_ptr);
-    printPtr(settings_cursor % 4);
-    printScrollBar(settings_cursor, SETTINGS_ITEMS);
+    //printPtr(settings_cursor % 4);
+    //printScrollBar(settings_cursor, SETTINGS_ITEMS);
     refresh_screen = true;
     //u8g2.updateDisplay();
+  } else {
+    PGM_P pstr = pgm_read_word(settings_items + settings_cursor);
+    char buffer[strlen_P(pstr)+1];
+    strcpy_P(buffer, pstr);
+  
+    counter = scrollText(buffer, settings_cursor % 4, counter);
   }
 
-  PGM_P pstr = pgm_read_word(settings_items + settings_cursor);
-  char buffer[strlen_P(pstr)+1];
-  strcpy_P(buffer, pstr);
   
-  counter = scrollText(buffer, settings_cursor % 4, counter);
   printPtr(settings_cursor % 4);
   printScrollBar(settings_cursor, SETTINGS_ITEMS);
+  //refresh_screen = true;
   
 }
 
