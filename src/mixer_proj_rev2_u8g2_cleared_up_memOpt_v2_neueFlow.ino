@@ -410,9 +410,6 @@ void speedMenu() {
 }
 
 
-
-
-
 //выводит время в формате M:SS у правого края экрана
 // Если выставлен is_setup, то подчеркнет цифру
 //с порядковым номером digit
@@ -428,14 +425,14 @@ void printTime(uint16_t T, uint8_t ptr, bool is_setup = false, uint8_t digit = 0
   uint8_t s1 = (T % 60) / 10;
   uint8_t s2 = (T % 60) % 10;
 
-  char m_c[2];
-  char s1_c[2];
-  char s2_c[2];
+  char m_c[1];
+  char s1_c[1];
+  char s2_c[1];
 
   itoa(m, m_c, 10);     //переведем инт в строку (десятичное представление)
   itoa(s1, s1_c, 10);
   itoa(s2, s2_c, 10);
-
+  
   const uint8_t x_0 = SCREEN_WIDTH - 4 * 6 - DATA_X_BIAS + 5;
   uint8_t y_0 = 4 + ptr * 16 + 8;
 
@@ -449,6 +446,7 @@ void printTime(uint16_t T, uint8_t ptr, bool is_setup = false, uint8_t digit = 0
   u8g2.drawBox(x_0, y_0-8, 20,11);
   //u8g2.drawBox(x_0,y_0, 20, 3);
   u8g2.setDrawColor(1);
+
 
   u8g2.setCursor(x_0, y_0);
   u8g2.print(m);
@@ -518,7 +516,6 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
   }
 
 
-
   //enter.tick();
   if (enter.isClicked()) {
   //if (u8g2.getMenuEvent() ==ENTER) {
@@ -539,14 +536,10 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
     printTime(tmp, ptr, true, digit);
     //refresh_screen = true;
     //u8g2.updateDisplay();
-  }
-  //up.tick();
-  //down.tick();
-
-
-  //Оптимизация через Look up table не дает преимущества
-  if (up.isClicked()) {
+  } else if (up.isClicked()) {
+    //МОГУ ЛИ Я СЕБЕ ДОВЕРЯТЬ, УЧИТЫВАЯ СОСТОЯНИЕ?
   //if (u8g2.getMenuEvent() == UP) {
+    //Оптимизация через Look up table не дает преимущества
     switch(digit) {
       case 1:
         //минуты
@@ -642,9 +635,9 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
     uint8_t o = data % 10;
 
     
-    char h_c[2];
-    char t_c[2];
-    char o_c[2];
+    char h_c[1];
+    char t_c[1];
+    char o_c[1];
 
     itoa(h, h_c, 10);
     itoa(t, t_c, 10);
@@ -661,7 +654,7 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
 
     switch(digit) {
       case HUNDREDS:
-        u8g2.drawHLine(x_0, y_0+1, h_width);
+        u8g2.drawHLine(x_0, y_0 + 1, h_width);
         break;
       case TENS: 
         u8g2.drawHLine(x_0 + h_width + 1, y_0 + 1, t_width);
@@ -713,7 +706,7 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
   if (need_to_load_interface) {
     digit = 1;
     tmp = data; 
-    tmp_digit = digit;
+    //tmp_digit = digit;
     printNumbers(tmp, ptr, true, digit);
     //u8g2.updateDisplay();
     //refresh_screen = true;
@@ -735,19 +728,15 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
       return tmp;
     }
 
-    tmp_digit = digit;
+    //tmp_digit = digit;
     digit = leftRight(digit);
+    // TODO !!! проверить, это слишком хорошо чтобы быть правдой
     if (tmp_digit != digit) {
       printNumbers(tmp, ptr, true, digit);
       //refresh_screen = true;
       //u8g2.updateDisplay();
     }
-
-    printNumbers(tmp, ptr, true, digit);
-    
-    //up.tick();
-    //down.tick();
-    if (up.isClicked()) {
+    else if (up.isClicked()) {
     //if (u8g2.getMenuEvent() == UP) {
       //если сотни
       switch (digit) {
@@ -923,7 +912,7 @@ bool setupAccel() {
   
   if (need_to_load_interface) {
     printAccelRegime(CYCLE_DATA.is_accel_smooth, true);
-    refresh_screen = true;
+    //refresh_screen = true;
     //u8g2.updateDisplay();
     need_to_load_interface = false;
     tmp = CYCLE_DATA.is_accel_smooth;
@@ -949,7 +938,7 @@ bool setupAccel() {
     //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp = !tmp;
       printAccelRegime(tmp, true);
-      refresh_screen = true;
+      //refresh_screen = true;
       //u8g2.updateDisplay();
     }
     return tmp;
@@ -963,7 +952,7 @@ bool setupRepeat() {
 
   if (need_to_load_interface) {
     printCycleRegime(CYCLE_DATA.is_bidirectional, true);
-    refresh_screen = true;
+    //refresh_screen = true;
     //u8g2.updateDisplay();
     tmp = CYCLE_DATA.is_bidirectional;
     need_to_load_interface = false; 
@@ -985,7 +974,7 @@ bool setupRepeat() {
     //else if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN)) {
       tmp = !tmp;
       printCycleRegime(tmp, true);
-      refresh_screen = true;
+      //refresh_screen = true;
       //u8g2.updateDisplay();
     }
     return tmp;
