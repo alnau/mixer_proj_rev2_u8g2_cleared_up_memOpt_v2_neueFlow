@@ -11,11 +11,11 @@ extern bool emergency_stop; // флаг аварийного завершени�
 extern volatile bool pwr_loss;
 extern volatile bool is_restoring;
 extern volatile bool is_working;
-extern bool working_in_programming_mode;
-extern bool working_in_manual_mode;
+//extern bool working_in_programming_mode;
+//extern bool working_in_manual_mode;
 // extern bool data_initialised;
 
-extern bool safe_stop;
+//extern bool safe_stop;
 extern volatile bool need_to_stop;
 //! Флаг, поднимаемый после начала отработки торможения внутри motor_cntr.c.
 extern volatile bool is_stopping;
@@ -27,6 +27,7 @@ extern bool need_refresh_prog_page;
 // extern bool need_refresh_settings;
 extern bool refresh_screen;
 extern bool need_to_load_interface;
+extern bool need_update_EEPROM;
 //=================
 
 //===================
@@ -39,7 +40,7 @@ extern uint8_t menu_ptr;
 // extern uint8_t main_menu_ptr;
 // extern uint8_t setup_ptr;
 
-extern uint16_t prev_scroll_time;
+//extern uint16_t prev_scroll_time;
 extern uint16_t prev_scroll_time_8;
 
 // extern uint8_t curr_page;

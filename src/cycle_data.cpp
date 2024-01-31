@@ -10,7 +10,7 @@ void cycle_data::loadDataFromMem()
     cycle_data_vars data;
     eeprom_read_block((void *)&data, (void *)start_byte, sizeof(data));
 
-    uint8_t temp_word = 0;
+    //uint8_t temp_word = 0;
     // t_accel = eeprom_read_word((uint16_t *)start_byte);
     // v_const = eeprom_read_word((uint16_t *)(start_byte + SIZE_OF_DATA));
     // t_const = eeprom_read_word((uint16_t *)(start_byte + 2 * SIZE_OF_DATA));
@@ -25,22 +25,21 @@ void cycle_data::loadDataFromMem()
     t_slowdown = data.t_slowdown;
     t_pause = data.t_pause;
     num_cycles = data.num_cycles;
-    temp_word = data.flags;
+    //temp_word = data.flags;
 
-    is_accel_smooth = temp_word & 1;
-    is_bidirectional = (temp_word >> 1) & 1;
+    is_accel_smooth = data.flags & 0b00000001;
+    is_bidirectional = (data.flags >> 1) & 0b00000001;
 
-    is_accel_smooth = temp_word & 1;
-    is_bidirectional = (temp_word >> 1) & 1;
+    // is_accel_smooth = temp_word & 1;
+    // is_bidirectional = (temp_word >> 1) & 1;
 }
 void cycle_data::writeDataToMem()
 {
 
     // Serial.print(F("Writing to EEPROM... "));
 
-    uint8_t temp_byte = (is_bidirectional << 1) | is_accel_smooth;
 
-    cycle_data_vars data = {t_accel, v_const, t_const, t_slowdown, t_pause, num_cycles, temp_byte};
+    cycle_data_vars data = {t_accel, v_const, t_const, t_slowdown, t_pause, num_cycles, (is_bidirectional << 1) | is_accel_smooth};
     eeprom_update_block((const void *)&data, (void *)start_byte, sizeof(data));
 
     // eeprom_update_word((uint16_t *)start_byte, t_accel);
@@ -54,7 +53,7 @@ void cycle_data::writeDataToMem()
     // Serial.println(F("Done"));
 }
 
-uint16_t cycle_data::sizeOfCycleData()
+uint8_t cycle_data::sizeOfCycleData()
 {
     cycle_data_vars data;
     return sizeof(data);

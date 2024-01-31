@@ -2,6 +2,7 @@
 #define IO_CONSTRUCTOR_H
 
 #include "libs_header.h"
+#include "constants.h"
 
 //==== Экран ======
 //Для NANO 11 (MOSI), 12 (MISO), 13 (SCK)

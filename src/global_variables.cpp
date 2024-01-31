@@ -7,11 +7,11 @@ bool emergency_stop = false; // флаг аварийного завершени
 volatile bool pwr_loss = false;
 volatile bool is_restoring = false;
 bool volatile is_working = false;
-bool working_in_programming_mode = false;
-bool working_in_manual_mode = false;
+//bool working_in_programming_mode = false;
+//bool working_in_manual_mode = false;
 // bool data_initialised = false;
 
-bool safe_stop = true;
+//bool safe_stop = true;
 bool volatile need_to_stop = false;
 //! Флаг, поднимаемый после начала отработки торможения внутри motor_cntr.c.
 bool volatile is_stopping = false;
@@ -23,6 +23,7 @@ bool need_refresh_prog_page = false;
 // bool need_refresh_settings = false;
 bool need_to_load_interface = false;
 bool refresh_screen = false;
+bool need_update_EEPROM = false;
 //=================
 
 //===================
@@ -36,7 +37,7 @@ uint8_t menu_ptr = 0;
 // uint8_t main_menu_ptr = 0;
 // uint8_t setup_ptr = 0;
 
-uint16_t prev_scroll_time = 0;
+//uint16_t prev_scroll_time = 0;
 uint16_t prev_scroll_time_8 = 0;
 
 // uint8_t curr_page = 0;

@@ -8,6 +8,65 @@
 #include "utils.h"
 #include "io_constructor.h"
 
+
+// TODO: ПРАКТИЧЕСКИ АНАЛОГИЧНА ДВУМ ДРУГИМ. ОПТИМИЗИРОВАТЬ
+uint8_t leftRightProg(uint8_t curr_pos, uint8_t num_items)
+{
+    uint8_t tmp = curr_pos;
+
+    left.tick();
+    right.tick();
+
+    if (left.isClicked())   //if (u8g2.getMenuEvent() == LEFT)
+    {
+        tmp = constrain(curr_pos - 1, 0, num_items - 1);
+    }
+    else if (right.isClicked()) // if (u8g2.getMenuEvent() == RIGHT)
+    {
+        tmp = constrain(curr_pos + 1, 0, num_items - 1);
+    }
+    return tmp;
+}
+
+uint8_t upDownProg(uint8_t ptr, uint16_t items)
+{
+    uint8_t tmp = ptr;
+
+    up.tick();
+    down.tick();
+
+    if (up.isClicked())//if (u8g2.getMenuEvent() == UP)
+    {
+        tmp = constrain((uint8_t)(ptr - 1), 0, (uint8_t)(items - 1));
+    }
+    else if (down.isClicked())  //else if (u8g2.getMenuEvent() == DOWN)
+    {
+        tmp = constrain((uint8_t)(ptr + 1), 0, (uint8_t)(items - 1));
+    }
+    return tmp;
+}
+
+uint8_t digitToX(uint8_t digit)
+{
+
+    // -24 = 1
+    // -12 = 2
+    //  -6 = 3 
+    const uint8_t LUT[3] = {SCREEN_WIDTH - 4 * 6 , SCREEN_WIDTH - 2 * 6, SCREEN_WIDTH - 1 * 6}; 
+    return LUT[digit - 1];
+
+    // if (digit == 1)
+    //     return SCREEN_WIDTH - 4 * 6;
+    // else if (digit == 2)
+    //     return SCREEN_WIDTH - 2 * 6;
+    // else if (digit == 3)
+    //     return SCREEN_WIDTH - 1 * 6;
+    // else
+    //     return 0;
+    
+}
+
+
 // альтеренативная функция для меню программирования
 uint8_t scrollText_8(char *text, uint8_t cursor, uint8_t counter)
 {

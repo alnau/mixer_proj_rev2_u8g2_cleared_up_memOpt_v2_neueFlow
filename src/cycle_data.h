@@ -11,7 +11,7 @@ struct cycle_data_vars
     uint16_t t_const;
     uint16_t t_slowdown;
     uint16_t t_pause;
-    uint16_t num_cycles;
+    uint8_t num_cycles;
     uint8_t flags;
 };
 
@@ -28,13 +28,13 @@ public:
     uint16_t t_const;
     uint16_t t_slowdown;
     uint16_t t_pause;
-    uint16_t num_cycles;
+    uint8_t num_cycles;
     bool is_accel_smooth;
     bool is_bidirectional;
 
     void loadDataFromMem();
     void writeDataToMem();
-    uint16_t sizeOfCycleData();
+    uint8_t sizeOfCycleData();
 };
 
 extern cycle_data CYCLE_DATA;

@@ -29,8 +29,9 @@
 #define SPEED 0
 #define MAIN 1
 #define CYCLE 2
-#define SETTINGS 3
-#define PROGRAM_SELECT 4
+#define PROGRAM_SELECT 3
+#define SETTINGS 4
+
 #define PROGRAM_SETUP 5
 
 // Настройка цикла перемешивания
@@ -90,7 +91,7 @@
 // Число эл-тов в режиме ручного запуска
 #define SETUP_ITEMS 8
 // Число эл-тов в меню настроек
-#define SETTINGS_ITEMS 4
+#define SETTINGS_ITEMS 2
 
 
 
@@ -107,12 +108,13 @@
 
 #define MAX_TIME 300
 #define MAX_RPM 200
-#define MAX_NUM MAX_RPM
+#define MAX_NUM 255
 
 
 //частота обновления текста в режиме прокрутки
 #define SCROLL_FREQ 1
 #define SCROLL_PERIOD 333  
+#define UPDATE_PERIOD 200
 //! Максимальная длина текствой строки меню (используется в режиме прокрутки)
 #define TEXT_MAX_LEN (SCREEN_WIDTH - DATA_COL_WIDTH) / 6 - 7
 //! Аналогично, но используется в програмном режимережиме 
@@ -121,7 +123,7 @@
 #define DATA_X_BIAS 7
 #define LINE_Y_BIAS -1
 //! Время загрузки менюшек в мс
-#define LOADING_TIME 1000
+#define LOADING_TIME 500
 
 #define BUZZER 3
 #define BUZZER_PITCH 25
