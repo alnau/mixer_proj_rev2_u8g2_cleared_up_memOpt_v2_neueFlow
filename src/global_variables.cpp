@@ -43,24 +43,24 @@ uint16_t prev_scroll_time_8 = 0;
 // uint8_t curr_page = 0;
 // uint8_t settings_cursor = 0;
 
-const char sett_0[] PROGMEM = "Яркость";
-const char sett_1[] PROGMEM = "Звук";
-const char sett_2[] PROGMEM = "Плавная остановка";
+const char sett_0[] PROGMEM = "Яркость\0";
+const char sett_1[] PROGMEM = "Звук\0";
+const char sett_2[] PROGMEM = "Плавная  остановка\0";
 const char sett_3[] PROGMEM = ""; // Отправить данные
 const char sett_4[] PROGMEM = ""; // Получить данные
 
-const char mm_0[] PROGMEM = "Режим";
-const char mm_1[] PROGMEM = "Программы";
-const char mm_2[] PROGMEM = "Настройки";
+const char mm_0[] PROGMEM = "Режим\0";
+const char mm_1[] PROGMEM = "Программы\0";
+const char mm_2[] PROGMEM = "Настройки\0";
 
-const char setup_0[] PROGMEM = "Время ускорения";
-const char setup_1[] PROGMEM = "Скорость вращения";
-const char setup_2[] PROGMEM = "Время постоянного вращения";
-const char setup_3[] PROGMEM = "Время торможения";
-const char setup_4[] PROGMEM = "Время паузы";
-const char setup_5[] PROGMEM = "Число повторений";
-const char setup_6[] PROGMEM = "Ускорение";
-const char setup_7[] PROGMEM = "Режим вращения";
+const char setup_0[] PROGMEM = "Время  ускорения\0";
+const char setup_1[] PROGMEM = "Скорость  вращения\0";
+const char setup_2[] PROGMEM = "Время  постоянного  вращения\0";
+const char setup_3[] PROGMEM = "Время  торможения\0";
+const char setup_4[] PROGMEM = "Время  паузы\0";
+const char setup_5[] PROGMEM = "Число  повторений\0";
+const char setup_6[] PROGMEM = "Ускорение\0";
+const char setup_7[] PROGMEM = "Режим  вращения\0";
 
 const char *const settings_items[] PROGMEM = {sett_0, sett_1, sett_3, sett_4};
 const char *const main_menu_items[] PROGMEM = {mm_0, mm_1, mm_2};

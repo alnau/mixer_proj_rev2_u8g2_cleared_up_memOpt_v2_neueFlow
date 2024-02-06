@@ -194,7 +194,7 @@ void startMotor()
 void initTimer1(void)
 {
 	// На всякий случай установим что мы в состоянии STOP
-	srd.run_state = STOP;
+	//srd.run_state = STOP;
 	// Без этого не работает [предположительно] не работает OCR1A
 	TCCR1A = 0;
 	// Timer/Counter 1 в режиме 4 CTC (Не работает)
@@ -257,7 +257,7 @@ ISR(TIMER1_COMPA_vect)
 	{
 		// загрузим в OCR1A паузу c_i (изначально c_0, но обновляется при каждом вызове)
 		OCR1A = srd.step_delay;
-		OCR1B = (srd.step_delay >> 8);
+		//OCR1B = (srd.step_delay >> 8);
 	}
 
 	switch (srd.run_state)
@@ -612,7 +612,7 @@ void printRampDataEEPROM()
 	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 26));
 }
 
-
+// TODO: проверить что srd позволяет восстановить информацию
 void restoreRampState()
 {
 	/*
@@ -679,7 +679,7 @@ uint32_t m_sqrt(uint32_t x)
 {
 	uint32_t xr; // result register
 	uint32_t q2; // scan-bit register
-	uint8_t f;	  // flag (one bit)
+	bool f;	  // flag (one bit)
 
 	xr = 0;			  // clear result
 	q2 = 0x40000000L; // higest possible result bit
@@ -688,11 +688,11 @@ uint32_t m_sqrt(uint32_t x)
 		if ((xr + q2) <= x)
 		{
 			x -= xr + q2;
-			f = 1; // set flag
+			f = true; // set flag
 		}
 		else
 		{
-			f = 0; // clear flag
+			f = false; // clear flag
 		}
 		xr >>= 1;
 		if (f)

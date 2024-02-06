@@ -49,14 +49,14 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
         {
             u8g2.drawHLine(10, 0, SCREEN_WIDTH - 20); // если упремся в потолок меню, рисуем полоску сверху
             u8g2.updateDisplay();
-            delay(100);
+            delay(250);
             u8g2.setDrawColor(0);
             u8g2.drawHLine(10, 0, SCREEN_WIDTH - 20);
             //u8g2.drawBox(10, 0, SCREEN_WIDTH - 20, 1); // и замажем ее
             u8g2.setDrawColor(1);
             u8g2.updateDisplay();
         }
-        tmp = constrain((uint8_t)(ptr - 1), 0, (uint8_t)(items - 1));
+        tmp = constrain(ptr - 1, 0, items - 1);
         //refresh_screen = true;
         //return tmp;
     }
@@ -67,7 +67,7 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
         {
             u8g2.drawHLine(10, SCREEN_HEIGHT - 1, SCREEN_WIDTH - 20); // аналогичная прямая
             u8g2.updateDisplay();
-            delay(100);
+            delay(250);
             u8g2.setDrawColor(0);
             u8g2.drawHLine(10, SCREEN_HEIGHT - 1, SCREEN_WIDTH - 20);
             //u8g2.drawBox(10, SCREEN_HEIGHT - 2, SCREEN_WIDTH - 15, 4); // и ее удаление
@@ -100,8 +100,8 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
 //         tmp = constrain(digit + 1, 1, 3);
 //     }
 //     return tmp;
-// }
 
+// }
 // TODO: ПРАКТИЧЕСКИ АНАЛОГИЧНА ДВУМ ДРУГИМ. ОПТИМИЗИРОВАТЬ
 uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4)
 {
@@ -141,8 +141,12 @@ char *substring(const char *str, size_t start, size_t end)
     //     debugln("substring error");
     //     return nullptr;
     // }
+    
 
-    size_t substr_length = end - start;
+    size_t substr_length = min(end, strlen(str)) - start;
+
+    if (substr_length < 1) 
+        return nullptr;
     char *substr = new char[substr_length + 1]; // +1 for the null terminator
 
     // Use memcpy to copy the substring into the new variable
