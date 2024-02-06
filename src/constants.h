@@ -10,12 +10,6 @@
 #define RIGHT_BTN 22
 #define ENTER_BTN 18
 
-#define FUNC U8X8_MSG_GPIO_MENU_HOME
-#define ENTER U8X8_MSG_GPIO_MENU_SELECT
-#define LEFT U8X8_MSG_GPIO_MENU_PREV
-#define RIGHT U8X8_MSG_GPIO_MENU_NEXT
-#define UP  U8X8_MSG_GPIO_MENU_UP
-#define DOWN U8X8_MSG_GPIO_MENU_DOWN  
 
 //пины дисплея
 #define SI 46
@@ -24,12 +18,31 @@
 #define RSE 40
 #define CS 38
 
+// Перевод с итераторов на state machine
+// Функции высших уровней
 #define SPEED 0
 #define MAIN 1
 #define CYCLE 2
-#define SETTINGS 3
-#define PROGRAM_SELECT 4
+#define PROGRAM_SELECT 3
+#define SETTINGS 4
+
 #define PROGRAM_SETUP 5
+
+// Настройка цикла перемешивания
+#define SETUP_T_ACCEL 6
+#define SETUP_V 7
+#define SETUP_T_WORK 8
+#define SETUP_T_SLOWDOWN 9
+#define SETUP_T_PAUSE 10
+#define SETUP_N_CYCLES 11
+#define SETUP_SMOOTHNESS 12
+#define SETUP_DIR 13
+
+// Статус настроек
+#define SETUP_SOUND 14
+#define SETUP_SAFE_STOP 15
+#define SEND_DATA 16
+#define RECIEVE_DATA 17
 
 //==== Пины мотора ====
 // Пин шага. Переход в HIGH делает шаг
@@ -72,7 +85,7 @@
 // Число эл-тов в режиме ручного запуска
 #define SETUP_ITEMS 8
 // Число эл-тов в меню настроек
-#define SETTINGS_ITEMS 4
+#define SETTINGS_ITEMS 2
 
 
 
@@ -89,12 +102,13 @@
 
 #define MAX_TIME 300
 #define MAX_RPM 200
-#define MAX_NUM MAX_RPM
+#define MAX_NUM 255
 
 
 //частота обновления текста в режиме прокрутки
 #define SCROLL_FREQ 1
 #define SCROLL_PERIOD 333  
+#define UPDATE_PERIOD 200
 //! Максимальная длина текствой строки меню (используется в режиме прокрутки)
 #define TEXT_MAX_LEN (SCREEN_WIDTH - DATA_COL_WIDTH) / 6 - 7
 //! Аналогично, но используется в програмном режимережиме 
@@ -103,7 +117,7 @@
 #define DATA_X_BIAS 7
 #define LINE_Y_BIAS -1
 //! Время загрузки менюшек в мс
-#define LOADING_TIME 1000
+#define LOADING_TIME 500
 
 #define BUZZER 3
 #define BUZZER_PITCH 25
