@@ -9,7 +9,7 @@
 #include <Arduino.h>
 #include <avr/eeprom.h>
 
-#define IS_DEBUG
+//#define IS_DEBUG
 
 #ifdef IS_DEBUG
   #define debug(x) Serial.print(x)

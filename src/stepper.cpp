@@ -269,6 +269,7 @@ ISR(TIMER1_COMPA_vect)
 		// need_refresh_speed_menu = true;
 		step_count = 0;
 		rest = 0;
+		refresh_screen = true;
 		// Остановим Timer1
 		TCCR1B &= ~((1 << CS12) | (1 << CS11) | (1 << CS10));
 		digitalWrite(ENA_PIN, HIGH);
