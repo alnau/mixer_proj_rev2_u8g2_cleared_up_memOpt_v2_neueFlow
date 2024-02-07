@@ -60,7 +60,7 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
         //refresh_screen = true;
         //return tmp;
     }
-    else if (down.isClicked())   //else if (u8g2.getMenuEvent() == DOWN)
+    if (down.isClicked())   //else if (u8g2.getMenuEvent() == DOWN)
     {
         debugln(F("down"));
         if (ptr + 1 > (uint8_t)(items - 1))
@@ -115,7 +115,7 @@ uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4)
         debugln(F("left"));
         tmp = constrain(curr_pos - 1, 1, num_items - 1);
     }
-    else if (right.isClicked()) //else if (u8g2.getMenuEvent() == RIGHT)
+    if (right.isClicked()) //else if (u8g2.getMenuEvent() == RIGHT)
     {
         debugln(F("right"));
         tmp = constrain(curr_pos + 1, 1, num_items - 1);
@@ -143,14 +143,14 @@ char *substring(const char *str, size_t start, size_t end)
     // }
     
 
-    size_t substr_length = min(end, strlen(str)) - start;
+    size_t substr_length = min(2*end, strlen(str)) - 2*start;
 
-    if (substr_length < 1) 
+    if (substr_length < 2) 
         return nullptr;
     char *substr = new char[substr_length + 1]; // +1 for the null terminator
 
     // Use memcpy to copy the substring into the new variable
-    memcpy(substr, str + start, substr_length);
+    memcpy(substr, str + 2*start, substr_length);
 
     // Don't forget to null-terminate the new string
     substr[substr_length] = '\0';

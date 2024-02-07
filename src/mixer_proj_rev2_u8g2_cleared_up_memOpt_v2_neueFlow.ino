@@ -1,7 +1,9 @@
 
 //#define WOKWI
 
-//#define IS_DEBUG
+#define IS_DEBUG
+
+
 
 #include "constants.h"
 #include "libs_header.h"
@@ -14,6 +16,7 @@
 
 
 //#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
+
 
 
 void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
@@ -141,16 +144,16 @@ void checkEmergencyStop() {
     OCR1A = 10;
     // Установим таймер с делителем на 64
     TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
-    digitalWrite(ENA_PIN, LOW); //Разбудим двигатель
+    //digitalWrite(ENA_PIN, LOW); //Разбудим двигатель
 
 
     // Выведем меню на экран
-    u8g2.clear();
-    u8g2.setCursor(0, 8);
+    //u8g2.clear();
+    //u8g2.setCursor(0, 8);
     // TODO: перевести на userInterfaceMessage()
-    u8g2.print(F("Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
+    //u8g2.print(F("Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
     //u8g2. ("Контроллер был", "отключен во время работы", "Зажмите [E] чтобы продолжить", "Ok"); //блокирующее. Будет тяжело мерцать и орать
-    u8g2.updateDisplay();
+    //u8g2.updateDisplay();
 
     //необходимо подгрузить параметры последнего режима и выставить is_working, чтобы работа мешалки продолжалась по прерыванию таймера
     // working_in_programming_mode = (tmp >> 3) & 0b00000001;  // выставили режим, в котором происходит работа                            //восстановили предыдущий процесс
@@ -174,6 +177,7 @@ void checkEmergencyStop() {
         //   //u8g2.setContrast(0);
         //   is_lit = true;
         // }
+        u8g2.clear();
         u8g2.setCursor(0, 8);
         u8g2.print(F(" Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
         u8g2.updateDisplay();
@@ -300,7 +304,7 @@ void speedMenu() {
 
   
   //обработка меню при вызове
-  if ((is_working or is_stopping)) {
+  if ((is_working or is_stopping) or refresh_screen) {
     if (srd.run_state != PAUSE)
       speed = (uint8_t)(SCALER/(srd.step_delay));
     else 
@@ -448,15 +452,15 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
     switch(digit) {
       case 1:
         //минуты
-        tmp = constrain(tmp - 60, 1, MAX_TIME);
+        tmp = constrain(tmp - 60, 0, MAX_TIME);
         break;
       case 2:
         //десятки минут
-        tmp = constrain(tmp - 10, 1, MAX_TIME);
+        tmp = constrain(tmp - 10, 0, MAX_TIME);
         break;
       case 3:
         //секунды
-        tmp = constrain(tmp - 1, 1, MAX_TIME);
+        tmp = constrain(tmp - 1, 0, MAX_TIME);
         break;
     }
     printTime(tmp, ptr, true, digit);
@@ -481,6 +485,9 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
   u8g2.drawBox(x_0, y_0-8, 20,11);
   u8g2.setDrawColor(1);
   u8g2.setCursor(x_0, y_0);
+  if (data == 0) {
+    u8g2.print(F("000"));
+  }
   if (order < 3) {
     for (uint8_t i = 1; i <= 3 - order; i++)
       u8g2.print(F("0"));  //заполняем нулями числа меньше сотен, чтобы было можно выставлять старшие порядки
@@ -619,13 +626,13 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
       //если сотни
       switch (digit) {
         case 1:
-          tmp = constrain(tmp - 100, 1, MAX_NUM);
+          tmp = constrain(tmp - 100, 0, MAX_NUM);
           break;
         case 2: 
-          tmp = constrain(tmp - 10, 1, MAX_NUM);
+          tmp = constrain(tmp - 10, 0, MAX_NUM);
           break;
         case 3:
-          tmp = constrain(tmp - 1, 1, MAX_NUM);
+          tmp = constrain(tmp - 1, 0, MAX_NUM);
           break;
       }
       printNumbers(tmp, ptr, true, digit);
@@ -654,17 +661,21 @@ uint8_t scrollText(char* text, uint8_t cursor, uint8_t counter, uint8_t cutoff =
   
   if ((uint16_t)millis() - prev_scroll_time > SCROLL_PERIOD) {
     //uint8_t len = (strlen(text) + 1) / 2;
-    uint8_t len = strlen(text);
+    uint8_t len = strlen(text)/2 - 1;
     clearMenuItem(cursor);
     u8g2.setCursor(8, 4 + cursor * 16 + 8);
-    if (len >= 2 * TEXT_MAX_LEN) {
+    if (len >= TEXT_MAX_LEN) {
       uint8_t start_ptr = counter % len;
-      debugln(start_ptr);
-      u8g2.print(substring(text, start_ptr, start_ptr + 2 * TEXT_MAX_LEN));
-      debugln(substring(text, start_ptr, start_ptr + 2 * TEXT_MAX_LEN));
+      //debugln(start_ptr);
+      
+      char* tmp_substr = substring(text, start_ptr, start_ptr + TEXT_MAX_LEN);
+      u8g2.print(tmp_substr);
+      //debugln(tmp_substr);
+      delete[] tmp_substr;
+      
       prev_scroll_time = (uint16_t)millis();
       refresh_screen = true;
-      return counter + 2;
+      return counter + 1;
     }
     else {
       //!!! TODO: в теории, эту проверку можно перенести на substring, заменяя end на strlen
@@ -690,7 +701,9 @@ void printSetupPages(uint8_t cursor) {
       char buffer[strlen_P(pstr)+1];
       strcpy_P(buffer, pstr);
 
-      u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN));
+      char* tmp_substr = substring(buffer, 0, TEXT_MAX_LEN);
+      u8g2.print(tmp_substr);
+      delete[] tmp_substr;
     }
   } else {
     for (uint8_t i = 0; i < 4; i++) {
@@ -700,7 +713,9 @@ void printSetupPages(uint8_t cursor) {
       char buffer[strlen_P(pstr)+1];
       strcpy_P(buffer, pstr);
 
-      u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN));
+      char* tmp_substr = substring(buffer, 0, TEXT_MAX_LEN);
+      u8g2.print(tmp_substr);
+      delete[] tmp_substr;
     }
   }
 }
@@ -713,7 +728,11 @@ void refreshMenuItem(char* item, uint8_t cursor) {
   u8g2.drawBox(8,4+(cursor%4)*16,90 , 10);
   u8g2.setDrawColor(1);
   u8g2.setCursor(8, 4 + (cursor % 4) * 16 + 8);
-  u8g2.print(substring(item, 0, 2 * TEXT_MAX_LEN));
+  
+  char* tmp_substr = substring(item, 0, TEXT_MAX_LEN);
+  u8g2.print(tmp_substr);
+  refresh_screen = true;
+  delete[] tmp_substr;
 }
 
 //выводит данные меню установки режима вращения в информационную колонку в правой части экрана
@@ -889,7 +908,12 @@ void setupCycle() {
   if (tmp_ptr != setup_ptr) {
     //отловили момент перехода к следующему элементу
     counter = 0;
-    refresh_screen = true;
+    //refresh_screen = true;
+
+    PGM_P pstr = pgm_read_word(setup_menu_items + tmp_ptr);
+    char buffer[strlen_P(pstr)+1];
+    strcpy_P(buffer, pstr);
+    refreshMenuItem(buffer, tmp_ptr);
   }
 
   //если нужно перейти с первой на вторую на вторую страницу
@@ -996,7 +1020,10 @@ void printSettingsPages(uint8_t cursor) {
       strcpy_P(buffer, pstr);
 
       u8g2.setCursor(8, 4 + 16 * i + 8);
-      u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN));
+
+      char* tmp_substr = substring(buffer, 0, TEXT_MAX_LEN);
+      u8g2.print(tmp_substr);
+      delete[] tmp_substr;
     }
     return;
   } else {
@@ -1006,7 +1033,10 @@ void printSettingsPages(uint8_t cursor) {
       strcpy_P(buffer, pstr);
 
       u8g2.setCursor(8, 4 + 16 * (i - 4) + 8);
-      u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN));
+
+      char* tmp_substr = substring(buffer, 0, TEXT_MAX_LEN);
+      u8g2.print(tmp_substr);
+      delete[] tmp_substr;
     }
     return;
   }
@@ -1067,7 +1097,7 @@ void settings() {
     strcpy_P(buffer, pstr);
 
     refreshMenuItem(buffer, tmp_ptr);
-    refresh_screen = true;
+    //refresh_screen = true;
   } else {
 
     //TODO: вполне возможно перенести распаковку PROGMEM на scrollText
@@ -1247,7 +1277,7 @@ void printScrollBar(uint8_t ptr, uint8_t num_items) {
   uint8_t bar_height = (SCREEN_HEIGHT - 8) / num_items;
   u8g2.setDrawColor(0);
   //u8g2.drawBox(SCREEN_WIDTH - 3, 0, 3, SCREEN_HEIGHT);
-  u8g2.drawVLine(SCREEN_WIDTH - 1, 4 + bar_height * (ptr-1), 2*bar_height);
+  u8g2.drawVLine(SCREEN_WIDTH - 1, 4 + bar_height * (ptr-1), 3*bar_height);
   u8g2.setDrawColor(1);
   u8g2.drawVLine(SCREEN_WIDTH - 1, 4 + bar_height * ptr, bar_height);
 }
@@ -1272,6 +1302,9 @@ inline void scanButtons() {
 
 
 void loop() {
+  //pinMode(ENA_PIN, OUTPUT);
+  //digitalWrite(ENA_PIN, HIGH);
+
   scanButtons();
   //debugln(menu_ptr);
   switch(menu_ptr) {

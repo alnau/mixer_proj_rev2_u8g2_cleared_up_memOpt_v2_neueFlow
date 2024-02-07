@@ -41,16 +41,16 @@ private:
    *
    * \return: возвращает состояние бита, отвечающего данной кнопке (проаерено на attiny85)
    */
-  const static uint8_t STATE = 0;
-  const static uint8_t LAST_STATE = 1;
-  const static uint8_t IS_READY = 2;
-  const static uint8_t READING = 3;
-  const static uint8_t IS_CLICK = 4;
-  const static uint8_t IS_RELEASED = 5;
-  const static uint8_t IS_READY_HOLD  = 6;
-  const static uint8_t IS_HOLD = 7;
+  const /*static*/ uint8_t STATE = 0;
+  const /*static*/ uint8_t LAST_STATE = 1;
+  const /*static*/ uint8_t IS_READY = 2;
+  const /*static*/ uint8_t READING = 3;
+  const /*static*/ uint8_t IS_CLICK = 4;
+  const /*static*/ uint8_t IS_RELEASED = 5;
+  const /*static*/ uint8_t IS_READY_HOLD  = 6;
+  const /*static*/ uint8_t IS_HOLD = 7;
 
-  const static uint8_t DEBOUNCE_TIME = 10;
+  const /*static*/ uint8_t DEBOUNCE_TIME = 20;
 
 /*
 

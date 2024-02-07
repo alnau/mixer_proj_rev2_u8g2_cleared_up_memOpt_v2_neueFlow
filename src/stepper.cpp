@@ -233,6 +233,7 @@ ISR(TIMER1_COMPA_vect)
 
 	if (is_restoring)
 	{
+		debugln(F("Restoring motor state vector"));
 		// Если востанавливаем состояние рампы после нежелательного перезапуска
 		restoreRampState();
 
@@ -526,6 +527,7 @@ void initStepper()
 	// DDRD |= (1 << DIR_PIN); //pinMode(DIR_PIN, OUTPUT);
 
 	digitalWrite(ENA_PIN, HIGH);
+	
 	// PORTD |= (1<< ENA_PIN);  //digitalWrite(ENA_PIN, HIGH);
 }
 

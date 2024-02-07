@@ -1,5 +1,6 @@
 #pragma once
 
+
 #define BAUD_RATE 57600
 
 //пины кнопок
@@ -48,9 +49,9 @@
 // Пин шага. Переход в HIGH делает шаг
 #define STEP_PIN 31
 // Пин направления вращения
-#define DIR_PIN 29
+#define DIR_PIN 27
 // Пин активирующий мотор. LOW -> вкл.
-#define ENA_PIN 27
+#define ENA_PIN 29
 
 
 //==== константы связанные с дисплеем ====
@@ -106,11 +107,11 @@
 
 
 //частота обновления текста в режиме прокрутки
-#define SCROLL_FREQ 1
-#define SCROLL_PERIOD 333  
-#define UPDATE_PERIOD 200
+//#define SCROLL_FREQ 1
+#define SCROLL_PERIOD 400  
+#define UPDATE_PERIOD 400
 //! Максимальная длина текствой строки меню (используется в режиме прокрутки)
-#define TEXT_MAX_LEN (SCREEN_WIDTH - DATA_COL_WIDTH) / 6 - 7
+#define TEXT_MAX_LEN (SCREEN_WIDTH - DATA_COL_WIDTH) / 6 - 2
 //! Аналогично, но используется в програмном режимережиме 
 #define TEXT_MAX_LEN_8 TEXT_MAX_LEN - 2
 //! Смещение столбца данных (коррекция)

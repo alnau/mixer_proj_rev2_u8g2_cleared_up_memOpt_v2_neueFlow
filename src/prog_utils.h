@@ -71,7 +71,7 @@ uint8_t digitToX(uint8_t digit)
 uint8_t scrollText_8(char *text, uint8_t cursor, uint8_t counter)
 {
 
-	uint8_t len = (strlen(text) + 1) / 2;
+	uint8_t len = (strlen(text)) / 2 -1;
 	if (len >= TEXT_MAX_LEN_8)
 	{
 		if ((uint16_t)millis() - prev_scroll_time_8 >= 1000 / SCROLL_FREQ)
@@ -79,12 +79,15 @@ uint8_t scrollText_8(char *text, uint8_t cursor, uint8_t counter)
 			// char* tmp[strlen(text)+1];
 
 			uint8_t i = counter % len;
-			// tmp = substring(text, i, i + 2 * TEXT_MAX_LEN_8);
 			u8g2.setDrawColor(0);
 			u8g2.drawBox(8, (cursor - 1 + 3) * 8, SCREEN_WIDTH - DATA_COL_WIDTH - DATA_X_BIAS - 8, 7);
 			u8g2.setDrawColor(1);
 			u8g2.setCursor(8, (cursor - 1 + 3) * 8 + 8);
-			u8g2.print(substring(text, i, i + 2 * TEXT_MAX_LEN_8));
+
+			char* tmp_substr = substring(text, i, i + TEXT_MAX_LEN_8);
+			u8g2.print(tmp_substr);
+			delete[] tmp_substr;
+
 			// delay(1000 / SCROLL_FREQ);
 			prev_scroll_time_8 = (uint16_t)millis();
 			u8g2.updateDisplay();
@@ -353,7 +356,9 @@ void printProgrammingSetupItems()
 		char buffer[strlen_P(pstr) + 1];
 		strcpy_P(buffer, pstr);
 
-		u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN_8));
+		char* tmp_substr = substring(buffer, i, i + TEXT_MAX_LEN_8);
+		u8g2.print(tmp_substr);
+		delete[] tmp_substr;
 	}
 }
 void refreshProgrammingSetupItems(uint8_t num)
@@ -364,7 +369,9 @@ void refreshProgrammingSetupItems(uint8_t num)
 	char buffer[strlen_P(pstr) + 1];
 	strcpy_P(buffer, pstr);
 
-	u8g2.print(substring(buffer, 0, 2 * TEXT_MAX_LEN_8));
+	char* tmp_substr = substring(buffer, i, i + TEXT_MAX_LEN_8);
+	u8g2.print(tmp_substr);
+	delete[] tmp_substr;
 }
 
 void printProgrammingData(int16_t p_vel, int16_t p_t_accel, int16_t p_t_work, int16_t p_t_decel, int16_t p_t_pause)

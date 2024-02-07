@@ -3,11 +3,13 @@
 
 
 #include <U8g2lib.h>
-#include "tiny_button.h"
-//#include <EncButton.h>
+//#include "tiny_button.h"
+#include <EncButton.h>
 
 #include <Arduino.h>
 #include <avr/eeprom.h>
+
+#define IS_DEBUG
 
 #ifdef IS_DEBUG
   #define debug(x) Serial.print(x)
