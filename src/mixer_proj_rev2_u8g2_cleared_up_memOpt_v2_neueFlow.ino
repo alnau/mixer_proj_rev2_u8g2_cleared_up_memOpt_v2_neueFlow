@@ -1,7 +1,7 @@
 
 //#define WOKWI
 
-#define IS_DEBUG
+//#define IS_DEBUG
 
 
 
@@ -51,7 +51,7 @@ inline void initData() {
     //eeprom_update_byte((uint8_t*)1, 127);               //записали дефолтную яркость во второй бит
     eeprom_update_byte((uint8_t*)2, 0);
   } else {
-    CYCLE_DATA.loadDataFromMem();  //инначе подгрузили установки режима из памяти
+    CYCLE_DATA.loadDataFromMem();  //иначе подгрузили установки режима из памяти
     loadSettigsRegister();         //и другие настройки
   }
 
@@ -229,7 +229,6 @@ void mainMenu() {
   if (enter.click()) {
     need_to_load_interface = true;
     menu_ptr = 2 + main_menu_ptr;
-
   }
   else if(func.click()) {
     menu_ptr = SPEED;
@@ -424,8 +423,8 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
     return tmp;
   }
 
-  tmp_digit = digit;
 
+  tmp_digit = digit;
   digit = leftRight(digit);
   if (digit != tmp_digit) {
     printTime(tmp, ptr, true, digit);
@@ -490,7 +489,7 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
   if (data == 0) {
     u8g2.print(F("000"));
   }
-  if (order < 3) {
+  else if (order < 3) {
     for (uint8_t i = 1; i <= 3 - order; i++)
       u8g2.print(F("0"));  //заполняем нулями числа меньше сотен, чтобы было можно выставлять старшие порядки
   }
@@ -574,74 +573,56 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
 
   if (need_to_load_interface) {
     digit = 1;
-    //tmp = data; 
-    //tmp_digit = digit;
     printNumbers(tmp, ptr, true, digit);
-    //u8g2.updateDisplay();
-    //refresh_screen = true;
     need_to_load_interface = false;
   }
 
   
-
-    //enter.tick();
-    if (enter.click())  {
-    //if (u8g2.getMenuEvent() == ENTER) {
-      printNumbers(tmp, ptr);
-      //u8g2.updateDisplay();
-      //refresh_screen = true;
-      //data = tmp;
-      //need_to_load_interface = true;
-      menu_ptr = CYCLE;
-      need_update_EEPROM = true;
-      return tmp;
-    }
-
-    tmp_digit = digit;
-    digit = leftRight(digit);
-    // TODO !!! проверить, это слишком хорошо чтобы быть правдой
-    if (tmp_digit != digit) {
-      printNumbers(tmp, ptr, true, digit);
-
-      //refresh_screen = true;
-      //u8g2.updateDisplay();
-    }
-    if (up.click()) {
-    //if (u8g2.getMenuEvent() == UP) {
-      //если сотни
-      switch (digit) {
-        case 1:
-          tmp = constrain(tmp + 100, 1, MAX_NUM);
-          break;
-        case 2: 
-          tmp = constrain(tmp + 10, 1, MAX_NUM);
-          break;
-        case 3:
-          tmp = constrain(tmp + 1, 1, MAX_NUM);
-          break;
-      }
-      printNumbers(tmp, ptr, true, digit);
-      //refresh_screen = true;
-      //u8g2.updateDisplay();
-    } else if (down.click()) {
-    //else if (u8g2.getMenuEvent() == DOWN) {
-      //если сотни
-      switch (digit) {
-        case 1:
-          tmp = constrain(tmp - 100, 0, MAX_NUM);
-          break;
-        case 2: 
-          tmp = constrain(tmp - 10, 0, MAX_NUM);
-          break;
-        case 3:
-          tmp = constrain(tmp - 1, 0, MAX_NUM);
-          break;
-      }
-      printNumbers(tmp, ptr, true, digit);
-      //refresh_screen = true;
-      //u8g2.updateDisplay();
-    }
+  if (enter.click())  {
+    printNumbers(tmp, ptr);
+    menu_ptr = CYCLE;
+    need_update_EEPROM = true;
     return tmp;
+  }
+
+  tmp_digit = digit;
+  digit = leftRight(digit);
+
+  if (tmp_digit != digit) {
+    printNumbers(tmp, ptr, true, digit);
+  }
+  if (up.click()) {
+    //если сотни
+    switch (digit) {
+      case 1:
+        tmp = constrain(tmp + 100, 1, MAX_NUM);
+        break;
+      case 2: 
+        tmp = constrain(tmp + 10, 1, MAX_NUM);
+        break;
+      case 3:
+        tmp = constrain(tmp + 1, 1, MAX_NUM);
+        break;
+    }
+    printNumbers(tmp, ptr, true, digit);
+  } else if (down.click()) {
+    //если сотни
+    switch (digit) {
+      case 1:
+        tmp = constrain(tmp - 100, 0, MAX_NUM);
+        break;
+      case 2: 
+        tmp = constrain(tmp - 10, 0, MAX_NUM);
+        break;
+      case 3:
+        tmp = constrain(tmp - 1, 0, MAX_NUM);
+        break;
+    }
+    printNumbers(tmp, ptr, true, digit);
+    //refresh_screen = true;
+    //u8g2.updateDisplay();
+  }
+  return tmp;
 }
 
 
@@ -855,7 +836,6 @@ void setupCycle() {
   static uint8_t setup_ptr;
   static uint8_t counter;  //переменная, считающая циклы, чтобы передавать ее в функцию бегущего текста
   uint8_t tmp_ptr; 
-  //static bool never_checked = true;
   
   
   if (need_to_load_interface) {
@@ -863,11 +843,10 @@ void setupCycle() {
     counter = 0;
     refresh_screen = true;
 
-    if (is_working /*and never_checked*/) {
+    if (is_working) {
       printWarning();
       
       u8g2.clear();
-      //never_checked = false;
     
       
     } else {
@@ -1078,9 +1057,11 @@ void settings() {
     //return; //TODO: (на 18.01) если убрать этот return, то можно сэкономить 2б
   }
 
-  if (refresh_screen) {
-    refreshSettings();
-  }
+  //Срезал порядка 50б, но не уверен, что это корректная оптимизация
+  //не корректная, это точно, но на настройки пока можно забить
+  // if (refresh_screen) {
+  //   refreshSettings();
+  // }
 
   tmp_ptr = settings_cursor;
   settings_cursor = upDown(settings_cursor, SETTINGS_ITEMS);

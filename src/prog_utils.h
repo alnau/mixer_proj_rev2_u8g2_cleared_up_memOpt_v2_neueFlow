@@ -142,12 +142,20 @@ void printProgNumbers(int16_t data, uint8_t ptr, bool is_setup, uint8_t digit)
 	{
 		u8g2.setCursor(SCREEN_WIDTH - 3 * 6 - DATA_X_BIAS, ptr * 8 + 8);
 	}
-	if (order < 3)
+
+	if (data == 0) {
+    	
+		u8g2.print(F("000"));
+  	
+	}
+	else if (order < 3)
 	{
 		for (int i = 1; i <= 3 - order; i++)
 			u8g2.print(F("0"));
 	}
+	
 	u8g2.print(abs_data);
+	
 	if (is_setup)
 	{
 		u8g2.drawHLine(SCREEN_WIDTH - (3 - digit + 1) * 6 - DATA_X_BIAS, (ptr + 1) * 8 + LINE_Y_BIAS, 4);
