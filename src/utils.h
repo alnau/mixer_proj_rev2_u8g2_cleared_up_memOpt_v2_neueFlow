@@ -36,7 +36,7 @@ bool check_if_first_init()
 // новое значение указателя, а если нет, то старое. Указатель буферизируется и не меняется
 // внутри функции
 //  НЕ РЕНДЕРЕР
-uint8_t upDown(uint8_t ptr, uint16_t items)
+uint8_t upDown(uint8_t ptr, uint8_t items)
 {
     uint8_t tmp = ptr;
 
@@ -74,7 +74,7 @@ uint8_t upDown(uint8_t ptr, uint16_t items)
             u8g2.setDrawColor(1);
             u8g2.updateDisplay();
         }
-        // need_refresh = true;
+        //need_refresh = true;
         //refresh_screen = true;
         tmp = constrain((uint8_t)(ptr + 1), 0, (uint8_t)(items - 1));
         //return tmp;
@@ -134,7 +134,7 @@ uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4)
       delete[] mySubstring; // Don't forget to free the memory
   }
 */
-char *substring(const char *str, size_t start, size_t end)
+char *substring(const char *str, uint8_t start, uint8_t end)
 {
     // if (str == nullptr || start > end || start >= strlen(str))
     // {
@@ -143,7 +143,7 @@ char *substring(const char *str, size_t start, size_t end)
     // }
     
 
-    size_t substr_length = min(2*end, strlen(str)) - 2*start;
+    uint8_t substr_length = min(2*end, strlen(str)) - 2*start;
 
     if (substr_length < 2) 
         return nullptr;
@@ -158,7 +158,7 @@ char *substring(const char *str, size_t start, size_t end)
 }
 
 // рассчет порядка числа
-uint8_t calculateOrder(uint16_t number)
+uint8_t calculateOrder(uint8_t number)
 {   
     //"тупая" реализация экономит 42б. хех
     switch (number) {

@@ -68,7 +68,7 @@ extern speedRampData srd;
 void startMotor();
 //void move(int32_t step, uint16_t accel, uint16_t decel, uint16_t speed, uint16_t t_pause, uint16_t n_cycles, bool is_bidir);
 void initTimer1(void);
-void doTheFStep(bool dir);
+inline void doTheFStep(bool dir);
 void initStepper();
 uint32_t m_sqrt(uint32_t x);
 void printRampData();
