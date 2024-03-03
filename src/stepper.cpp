@@ -223,6 +223,7 @@ ISR(TIMER1_COMPA_vect)
 	// сохраняем остаток от деления при вычислении периода между шагами
 	volatile static uint32_t rest = 0;
 
+	#ifdef POWER_LOSS
 	if (pwr_loss)
 	{
 		// отловили отключение энергии
@@ -260,6 +261,9 @@ ISR(TIMER1_COMPA_vect)
 		OCR1A = srd.step_delay;
 		//OCR1B = (srd.step_delay >> 8);
 	}
+	#else
+	OCR1A = srd.step_delay;
+	#endif
 
 	switch (srd.run_state)
 	{
@@ -269,6 +273,7 @@ ISR(TIMER1_COMPA_vect)
 		// need_refresh_speed_menu = true;
 		step_count = 0;
 		rest = 0;
+		refresh_screen = true;
 		// Остановим Timer1
 		TCCR1B &= ~((1 << CS12) | (1 << CS11) | (1 << CS10));
 		digitalWrite(ENA_PIN, HIGH);
@@ -531,7 +536,7 @@ void initStepper()
 	// PORTD |= (1<< ENA_PIN);  //digitalWrite(ENA_PIN, HIGH);
 }
 
-void doTheFStep(bool dir)
+inline void doTheFStep(bool dir)
 {
 	
 	digitalWrite(DIR_PIN, dir);
@@ -593,7 +598,7 @@ void printRampDataEEPROM()
 	debug(F("speed: "));
 	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 2));
 	debug(F("step_delay: "));
-	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 4));
+	debugln(eeprom_read_word((uint32_t *)RAMP_FIRST_BYTE + 4));
 	debug(F("decel_start: "));
 	debugln(eeprom_read_dword((uint32_t *)RAMP_FIRST_BYTE + 6));
 	debug(F("decel_val: "));
@@ -611,7 +616,7 @@ void printRampDataEEPROM()
 	debug(F("is_bidir: "));
 	debugln((bool)eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE + 25));
 	debug(F("t_pause: "));
-	debugln(eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE + 26));
+	debugln(eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE + 26));
 }
 
 // TODO: проверить что srd позволяет восстановить информацию
@@ -730,6 +735,30 @@ uint32_t m_sqrt(uint32_t x)
 
 // 	return xr;
 // }
+
+/*
+// в среднем 0.15 мс на операцию вплоть до x <= 1e4
+// при делителе частоты 256 получается ок 10 тиков на операцию. Т.О. 
+// с микрошагом 800 макс скорость 500 об/мин - GE
+uint16_t icbrt2(uint32_t x) {
+   uint32_t y, b, y2;
+
+   y2 = 0;
+   y = 0;
+   for (uint8_t s = 30; s >= 0; s = s - 3) {
+      y2 = 4*y2;
+      y = 2*y;
+      b = (3*(y2 + y) + 1) << s;
+      if (x >= b) {
+         x = x - b;
+         y2 = y2 + 2*y + 1;
+         y = y + 1;
+      }
+   }
+   return y;
+}
+
+*/
 
 // static uint32_t m_qrt2(uint32_t x)
 // {

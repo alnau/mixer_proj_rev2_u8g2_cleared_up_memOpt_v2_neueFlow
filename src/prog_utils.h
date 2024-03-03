@@ -17,11 +17,11 @@ uint8_t leftRightProg(uint8_t curr_pos, uint8_t num_items)
     left.tick();
     right.tick();
 
-    if (left.isClicked())   //if (u8g2.getMenuEvent() == LEFT)
+    if (left.click())   //if (u8g2.getMenuEvent() == LEFT)
     {
         tmp = constrain(curr_pos - 1, 0, num_items - 1);
     }
-    else if (right.isClicked()) // if (u8g2.getMenuEvent() == RIGHT)
+    else if (right.click()) // if (u8g2.getMenuEvent() == RIGHT)
     {
         tmp = constrain(curr_pos + 1, 0, num_items - 1);
     }
@@ -35,11 +35,11 @@ uint8_t upDownProg(uint8_t ptr, uint16_t items)
     up.tick();
     down.tick();
 
-    if (up.isClicked())//if (u8g2.getMenuEvent() == UP)
+    if (up.click())//if (u8g2.getMenuEvent() == UP)
     {
         tmp = constrain((uint8_t)(ptr - 1), 0, (uint8_t)(items - 1));
     }
-    else if (down.isClicked())  //else if (u8g2.getMenuEvent() == DOWN)
+    else if (down.click())  //else if (u8g2.getMenuEvent() == DOWN)
     {
         tmp = constrain((uint8_t)(ptr + 1), 0, (uint8_t)(items - 1));
     }
@@ -142,12 +142,20 @@ void printProgNumbers(int16_t data, uint8_t ptr, bool is_setup, uint8_t digit)
 	{
 		u8g2.setCursor(SCREEN_WIDTH - 3 * 6 - DATA_X_BIAS, ptr * 8 + 8);
 	}
-	if (order < 3)
+
+	if (data == 0) {
+    	
+		u8g2.print(F("000"));
+  	
+	}
+	else if (order < 3)
 	{
 		for (int i = 1; i <= 3 - order; i++)
 			u8g2.print(F("0"));
 	}
+	
 	u8g2.print(abs_data);
+	
 	if (is_setup)
 	{
 		u8g2.drawHLine(SCREEN_WIDTH - (3 - digit + 1) * 6 - DATA_X_BIAS, (ptr + 1) * 8 + LINE_Y_BIAS, 4);
@@ -167,7 +175,7 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 	while (1)
 	{
 		enter.tick();
-		if (enter.isClicked()) //if (u8g2.getMenuEvent() == ENTER)
+		if (enter.click()) //if (u8g2.getMenuEvent() == ENTER)
 		{
 			printProgNumbers(tmp, ptr, false, ptr);
 			u8g2.updateDisplay();
@@ -186,7 +194,7 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 		printProgNumbers(tmp, ptr, true, digit);
 		up.tick();
 		down.tick();
-		if (up.isClicked()) //if (u8g2.getMenuEvent() == UP)
+		if (up.click()) //if (u8g2.getMenuEvent() == UP)
 		{
 			// если сотни
 			if (digit == 1)
@@ -206,7 +214,7 @@ uint16_t setupProgNumbers(int16_t data, uint8_t ptr)
 			printProgNumbers(tmp, ptr, true, digit);
 			u8g2.updateDisplay();
 		}
-		else if (down.isClicked()) //else if (u8g2.getMenuEvent() == DOWN)
+		else if (down.click()) //else if (u8g2.getMenuEvent() == DOWN)
 		{
 			// если сотни
 			if (digit == 1)
@@ -256,7 +264,7 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 	while (1)
 	{
 		enter.tick();
-		if (enter.isClicked())	//if (u8g2.getMenuEvent() == ENTER)
+		if (enter.click())	//if (u8g2.getMenuEvent() == ENTER)
 		{
 			printProgTime(tmp, ptr, false, 0);
 			u8g2.updateDisplay();
@@ -273,7 +281,7 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 		up.tick();
 		down.tick();
 		
-		if (up.isClicked())	//if (u8g2.getMenuEvent() == UP)
+		if (up.click())	//if (u8g2.getMenuEvent() == UP)
 		{
 
 			// если минуты
@@ -294,7 +302,7 @@ uint16_t setupProgTime(int16_t T, uint8_t ptr)
 			printProgTime(tmp, ptr, true, digit);
 			u8g2.updateDisplay();
 		}
-		else if (down.isClicked())	//else if (u8g2.getMenuEvent() == DOWN)
+		else if (down.click())	//else if (u8g2.getMenuEvent() == DOWN)
 		{
 			// printTime(tmp, ptr, true, digit);
 			// если минуты
@@ -410,7 +418,7 @@ bool start_program(uint8_t prog_ptr, uint8_t curr_point_num)
 	while (1)
 	{
 		enter.tick();
-		if (enter.isClicked()) //if (u8g2.getMenuEvent() == ENTER)
+		if (enter.click()) //if (u8g2.getMenuEvent() == ENTER)
 		{
 			// очистить экран
 			need_refresh_prog_page = true;
@@ -438,7 +446,7 @@ bool start_program(uint8_t prog_ptr, uint8_t curr_point_num)
 
 		up.tick();
 		down.tick();
-		if (down.isClicked() or down.isClicked())	//if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN))
+		if (down.click() or down.click())	//if ((u8g2.getMenuEvent() == UP) or (u8g2.getMenuEvent() == DOWN))
 		{
 
 			yes_is_selected = !yes_is_selected; // обновить выбор
@@ -489,12 +497,12 @@ void setupProgram(uint8_t prog_ptr)
 		func.tick();
 		enter.tick();
 		
-		if (func.isClicked())	//if (u8g2.getMenuEvent() == FUNC)
+		if (func.click())	//if (u8g2.getMenuEvent() == FUNC)
 		{
 			u8g2.clear();
 			return;
 		}
-		else if (enter.isClicked())//else if (u8g2.getMenuEvent() == ENTER)
+		else if (enter.click())//else if (u8g2.getMenuEvent() == ENTER)
 		{
 			need_update_eeprom = true;
 			switch (item_num)
