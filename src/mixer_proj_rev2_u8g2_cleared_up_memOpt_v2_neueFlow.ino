@@ -3,7 +3,8 @@
 
 //#define IS_DEBUG
 
-
+// (01.11.24) Братан, не панкуй, если вернешься к этому файлу спустя долгое время. Все тестировалось на работу и с 
+// atmega328p и с atemga2560. Просто не забудь изменить окружение и все будет отлично. Аминь
 
 #include "constants.h"
 #include "libs_header.h"
@@ -13,11 +14,6 @@
 #include "stepper.h"
 #include "global_variables.h"
 #include "io_constructor.h"
-
-
-//#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
-
-
 
 void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
 
@@ -68,9 +64,7 @@ inline void loadSettigsRegister() {
 
 
 inline void initDisplay() {
-
-  //u8g2.begin(/* menu_select_pin= */ ENTER_BTN, /* menu_next_pin= */ RIGHT_BTN, /* menu_prev_pin= */ LEFT_BTN, /* menu_up_pin= */ UP_BTN, /* menu_down_pin= */ DOWN_BTN, /* menu_home_pin= */ FUNC_BTN);
-  //u8g2.begin(/* menu_select_pin= */ ENTER_BTN, /* menu_next_pin= */ U8X8_PIN_NONE, /* menu_prev_pin= */ U8X8_PIN_NONE, /* menu_up_pin= */ U8X8_PIN_NONE, /* menu_down_pin= */ U8X8_PIN_NONE, /* menu_home_pin= */ FUNC_BTN);
+  
   u8g2.begin();
   u8g2.setContrast(0);
   u8g2.enableUTF8Print();
@@ -132,8 +126,8 @@ void setup() {
 
 
 
-//проверяем при инициализации на факт, того что прошлый запуск процесса мешалки законился
-//аварийной остановкой и, если так, то сообщаем об этом пользователю
+// проверяем при инициализации на факт, того что прошлый запуск процесса мешалки не закончился
+// аварийной остановкой и, если так, то сообщаем об этом пользователю
 // НЕ РЕНДЕРЕР
 void checkEmergencyStop() {
   //emergency_stop = true;
@@ -189,7 +183,7 @@ void checkEmergencyStop() {
         //noTone(BUZZER);
         emergency_stop = false;
         uint8_t tmp = eeprom_read_byte((uint8_t*)0);
-        tmp = tmp & 0b11111101;  //вернули второй бит в состояние 0
+        tmp = tmp & ~(1<<1);  //вернули второй бит в состояние 0 !TODO: может быть факп
         eeprom_update_byte((uint8_t*)0, tmp);
         return;
       }
@@ -870,9 +864,8 @@ void setupCycle() {
     /*
      * Тут нужно пояснение
      * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
-     * реализации прибавление setup_ptr к шестерки автоматически вычисляет нужный литерал
+     * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
      * всго за один такт 
-     
     */
     menu_ptr = 6 + setup_ptr; 
     return;
@@ -1265,6 +1258,8 @@ void printScrollBar(uint8_t ptr, uint8_t num_items) {
   u8g2.drawVLine(SCREEN_WIDTH - 1, 4 + bar_height * ptr, bar_height);
 }
 
+
+
 inline void scanButtons() {
   enter.tick();
   func.tick();
@@ -1283,7 +1278,13 @@ inline void scanButtons() {
   */
 }
 
-
+/*
+ * повторю комментарий, написанный выше:
+ * Тут нужно пояснение
+ * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
+ * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
+ * всго за один такт      
+*/
 void loop() {
   //pinMode(ENA_PIN, OUTPUT);
   //digitalWrite(ENA_PIN, HIGH);

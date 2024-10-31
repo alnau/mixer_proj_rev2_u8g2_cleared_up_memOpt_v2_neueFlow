@@ -1,49 +1,51 @@
 #pragma once
 
+#include "libs_header.h"
 
-#define BAUD_RATE 57600
+const uint16_t BAUD_RATE = 57600;
 
 //пины кнопок
-#define FUNC_BTN 12
-#define LEFT_BTN 10
-#define DOWN_BTN 14
-#define UP_BTN 16
-#define RIGHT_BTN 22
-#define ENTER_BTN 18
+const uint8_t FUNC_BTN = 12;
+const uint8_t LEFT_BTN =10;
+const uint8_t DOWN_BTN = 14;
+const uint8_t UP_BTN = 16;
+const uint8_t RIGHT_BTN = 22;
+const uint8_t ENTER_BTN = 18;
 
 
 //пины дисплея
-#define SI 46
-#define _SCL 44
-#define RS 42
-#define RSE 40
-#define CS 38
+const uint8_t SI = 46;
+const uint8_t _SCL = 44;
+const uint8_t RS = 42;
+const uint8_t RSE = 40;
+const uint8_t CS = 38;
 
 // Перевод с итераторов на state machine
 // Функции высших уровней
-#define SPEED 0
-#define MAIN 1
-#define CYCLE 2
-#define PROGRAM_SELECT 3
-#define SETTINGS 4
+const uint8_t SPEED = 0;
+const uint8_t MAIN = 1;
+const uint8_t CYCLE = 2;
+const uint8_t PROGRAM_SELECT = 3;
+const uint8_t SETTINGS = 4;
 
-#define PROGRAM_SETUP 5
+const uint8_t PROGRAM_SETUP = 5;
 
-// Настройка цикла перемешивания
-#define SETUP_T_ACCEL 6
-#define SETUP_V 7
-#define SETUP_T_WORK 8
-#define SETUP_T_SLOWDOWN 9
-#define SETUP_T_PAUSE 10
-#define SETUP_N_CYCLES 11
-#define SETUP_SMOOTHNESS 12
-#define SETUP_DIR 13
+// Настройка цикла перемешивания, литералы, по которым идет переключение в конечном автомате
+// установки режима работы двигателя
+const uint8_t SETUP_T_ACCEL = 6;
+const uint8_t SETUP_V = 7;
+const uint8_t SETUP_T_WORK = 8;
+const uint8_t SETUP_T_SLOWDOWN = 9;
+const uint8_t SETUP_T_PAUSE = 10;
+const uint8_t SETUP_N_CYCLES = 11;
+const uint8_t SETUP_SMOOTHNESS = 12;
+const uint8_t SETUP_DIR = 13;
 
-// Статус настроек
-#define SETUP_SOUND 14
-#define SETUP_SAFE_STOP 15
-#define SEND_DATA 16
-#define RECIEVE_DATA 17
+// Аналогично для статуса настроек
+const uint8_t SETUP_SOUND = 14;
+const uint8_t SETUP_SAFE_STOP = 15;
+const uint8_t SEND_DATA = 16;
+const uint8_t RECIEVE_DATA = 17;
 
 //==== Пины мотора ====
 // Пин шага. Переход в HIGH делает шаг
@@ -54,7 +56,7 @@
 #define ENA_PIN 29
 
 
-//==== константы связанные с дисплеем ====
+//==== константы, связанные с дисплеем ====
 // ширина в пикс
 #define SCREEN_WIDTH 128 
 // высота в пикс
@@ -101,14 +103,18 @@
 //USER_DECEL = 100*RPM*2*pi/60/TIME_TO_STOP
 #define USER_DECEL (uint16_t)((100*MAX_RPM)/TIME_TO_STOP/(60/(2*PI))) //9.549 = 60/(2*PI)
 
+// Максимальное количество времени (сек), которое двигатель может находиться 
+// в одном состоянии
 #define MAX_TIME 300
+// Максимальное число оборотов в минуту
 #define MAX_RPM 200
+// Мкаксимальное число (циклы и тд)
 #define MAX_NUM 255
 
 
-//частота обновления текста в режиме прокрутки
-//#define SCROLL_FREQ 1
+//частота обновления текста в режиме прокрутки (мс)
 #define SCROLL_PERIOD 400  
+// Период обновления значения скорости, выводимого на экран (мс)
 #define UPDATE_PERIOD 400
 //! Максимальная длина текствой строки меню (используется в режиме прокрутки)
 #define TEXT_MAX_LEN (SCREEN_WIDTH - DATA_COL_WIDTH) / 6 - 2
@@ -120,11 +126,12 @@
 //! Время загрузки менюшек в мс
 #define LOADING_TIME 500
 
+// Пин пъезоэлемента (пока не используется)
 #define BUZZER 3
 #define BUZZER_PITCH 25
 
 //! Пин потери энергии
 #define PWR_LOSS 2 //INT 0
 
-
-#define MAX_DECCEL 100
+// Максимальное ускорение торможения
+//#define MAX_DECCEL 100
