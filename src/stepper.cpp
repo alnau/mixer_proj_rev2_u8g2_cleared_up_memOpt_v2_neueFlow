@@ -14,7 +14,7 @@ void startMotor()
 
 	//srd.dir = CCW;
 
-	srd.speed = 10 * PI * CYCLE_DATA.v_const / 3; //(2*3.14*100*RPM)/(60);
+	srd.speed = 10 * PI * R_REDUCTION * CYCLE_DATA.v_const / 3; //(2*3.14*100*RPM)/(60);
 	int32_t step = (int32_t)CYCLE_DATA.v_const * (int32_t)SPR * (int32_t)(CYCLE_DATA.t_const + (CYCLE_DATA.t_slowdown + CYCLE_DATA.t_accel) / 2) / 60;
 	srd.accel = srd.speed / CYCLE_DATA.t_accel;
 	srd.decel = srd.speed / CYCLE_DATA.t_slowdown;
@@ -65,10 +65,10 @@ void startMotor()
 
 	// найдем через сколько шагов мы достигнем макс. скорости
 	// max_s_lim = speed^2 / (2*alpha*accel)
-	max_s_lim = (long)srd.speed * srd.speed / (long)(((long)A_x20000 * srd.accel) / 100);
+	max_s_lim = (int32_t)srd.speed * (int32_t)srd.speed / (int32_t)(((int32_t)A_x20000 * srd.accel) / 100);
 
 	// Логика такая, что (max_s_lim) * accel/decel = w^2/(2 alpha accel) *accel/decel = w^2/(2 alp
-	srd.decel_val = -((long)max_s_lim * srd.accel) / srd.decel;
+	srd.decel_val = -((int32_t)max_s_lim * srd.accel) / srd.decel;
 
 	// Так как srd.decel_val < 0 => step + srd.decel_val = step - steps_to_stop - норм
 	srd.decel_start = step + srd.decel_val;
@@ -145,7 +145,7 @@ void startMotor()
 	//
 	// 		// найдем через сколько шагов мы достигнем макс. скорости
 	// 		// max_s_lim = speed^2 / (2*alpha*accel)
-	// 		max_s_lim = (long)speed * speed / (long)(((long)A_x20000 * accel) / 100);
+	// 		max_s_lim = (int32_t)speed * speed / (int32_t)(((int32_t)A_x20000 * accel) / 100);
 	// 		// если по какой-то причине мы получим 0, то все равно делаем хоть один шаг
 	// 		// if (max_s_lim == 0)
 	// 		// {
@@ -156,7 +156,7 @@ void startMotor()
 	// 		*Найдем через сколько шагов нам нужно было-бы начать торможение, если бы нам нужно было только ускоряться и тормозить /=\ => /\
 	// 		*n1 = (n1+n2)decel / (accel + decel)
 	// 		*/
-	// 		//accel_lim = ((long)step * decel) / (accel + decel);
+	// 		//accel_lim = ((int32_t)step * decel) / (accel + decel);
 	// 		// Аналогично, мы должны ускоритьс хлоть один шаг перед началом торможения
 	// 		// if (accel_lim == 0)
 	// 		// {
@@ -164,7 +164,7 @@ void startMotor()
 	// 		// }
 	//
 	// 		// Логика такая, что (max_s_lim) * accel/decel = w^2/(2 alpha accel) *accel/decel = w^2/(2 alp
-	// 		srd.decel_val = -((long)max_s_lim * accel) / decel;
+	// 		srd.decel_val = -((int32_t)max_s_lim * accel) / decel;
 	//
 	// 		// Отсюда srd.decel_val полностью адекватное число шагов для того, чтобы затормозить двигатель
 	//
@@ -223,7 +223,7 @@ ISR(TIMER1_COMPA_vect)
 	// сохраняем остаток от деления при вычислении периода между шагами
 	volatile static uint32_t rest = 0;
 
-	#ifdef POWER_LOSS
+#ifdef POWER_LOSS
 	if (pwr_loss)
 	{
 		// отловили отключение энергии
@@ -261,9 +261,9 @@ ISR(TIMER1_COMPA_vect)
 		OCR1A = srd.step_delay;
 		//OCR1B = (srd.step_delay >> 8);
 	}
-	#else
+#else
 	OCR1A = srd.step_delay;
-	#endif
+#endif
 
 	switch (srd.run_state)
 	{
@@ -287,7 +287,7 @@ ISR(TIMER1_COMPA_vect)
 
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			// логика такая, что для достижения фиксированной скорости n1*a1 = n2*a2, т.е. n_decel = n_accel*(a2/a1)
-			srd.accel_count = -((long)step_count * srd.accel) / USER_DECEL;
+			srd.accel_count = -((int32_t)step_count * srd.accel) / USER_DECEL;
 
 			new_step_delay = srd.step_delay; // Делаем еще одну задержку аналогичную предыдущей
 		}
@@ -297,8 +297,8 @@ ISR(TIMER1_COMPA_vect)
 			doTheFStep(srd.dir);
 			step_count++;																						 // прибавим общее число шагов
 			srd.accel_count++;																					 // и прибавим счтчик ускорения
-			new_step_delay = srd.step_delay - (((2 * (long)srd.step_delay) + rest) / (4 * srd.accel_count + 1)); // Нашли новую паузу
-			rest = ((2 * (long)srd.step_delay) + rest) % (4 * srd.accel_count + 1);								 // обновил остаток для следующей итерации
+			new_step_delay = srd.step_delay - (((2 * (int32_t)srd.step_delay) + rest) / (4 * srd.accel_count + 1)); // Нашли новую паузу
+			rest = ((2 * (int32_t)srd.step_delay) + rest) % (4 * srd.accel_count + 1);								 // обновил остаток для следующей итерации
 
 			// Проверим, не достигли ли мы макс скорости
 			if (new_step_delay <= srd.min_delay)
@@ -319,7 +319,7 @@ ISR(TIMER1_COMPA_vect)
 			// обработка необходимости остановки
 
 			// далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
-			srd.accel_count = -(long)srd.speed * srd.speed / (long)(((long)A_x20000 * USER_DECEL) / 100);
+			srd.accel_count = -(int32_t)srd.speed * srd.speed / (int32_t)(((int32_t)A_x20000 * USER_DECEL) / 100);
 			new_step_delay = last_accel_delay;
 			// OCR1A = 10; //минимальная задержка чтобы затриггерить новое прерывание
 		}
@@ -351,7 +351,7 @@ ISR(TIMER1_COMPA_vect)
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			// логика такая, что для достижения фиксированной скорости n1*a1 = n2*a2, т.е. n_decel1 = n_decel2 * (a2/a1)
 			// Здесь не уверен. Оставшееся число шагов =-srd.accel_count, т.е. работать нужно не со step_count, а именно с ним
-			srd.accel_count = ((long)srd.accel_count * srd.decel) / USER_DECEL;
+			srd.accel_count = ((int32_t)srd.accel_count * srd.decel) / USER_DECEL;
 
 			// debugln(srd.accel_count);
 			new_step_delay = srd.step_delay; // Делаем еще один
@@ -361,8 +361,8 @@ ISR(TIMER1_COMPA_vect)
 			doTheFStep(srd.dir);
 			step_count++;
 			srd.accel_count++;
-			new_step_delay = srd.step_delay + (((2 * (long)srd.step_delay) + rest) / (-4 * srd.accel_count - 3));
-			rest = ((2 * (long)srd.step_delay) + rest) % (-4 * srd.accel_count - 3);
+			new_step_delay = srd.step_delay + (((2 * (int32_t)srd.step_delay) + rest) / (-4 * srd.accel_count - 3));
+			rest = ((2 * (int32_t)srd.step_delay) + rest) % (-4 * srd.accel_count - 3);
 			// Проверка на последний шаг
 			if (srd.accel_count >= 0)
 			{
@@ -717,7 +717,7 @@ uint32_t m_sqrt(uint32_t x)
 	}
 }
 
-// static unsigned long m_qrt(unsigned long x)
+// static unsigned int32_t m_qrt(unsigned int32_t x)
 // {
 // 	if (x == 0)
 // 	{
