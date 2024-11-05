@@ -315,7 +315,8 @@ void speedMenu() {
   uint8_t speed = 0; 
   static uint8_t prev_speed;
   static uint16_t t_since_last_update;
-  const uint16_t SCALER = 30*ALPHA*T1_FREQ/PI; 
+  //константа, возникающая при пересчете из тиков до следующего шага в скорость (об/мин)
+  const uint16_t SCALER = 60*ALPHA*T1_FREQ/(2*PI);  
 
   //если только зашли после пред. менюшки
   if (need_to_load_interface) {
