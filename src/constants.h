@@ -119,7 +119,7 @@ const uint8_t RECIEVE_DATA = 17;
 #define TIME_TO_STOP 5
 //! Ускорение торможения при остановке по команде пользователя. В 0.01 рад/с^2
 //USER_DECEL = 100*RPM*2*pi/60/TIME_TO_STOP
-#define USER_DECEL (uint16_t)((100*MAX_RPM)/TIME_TO_STOP/(60/(2*PI))) //9.549 = 60/(2*PI) 
+#define USER_DECEL (uint16_t)((100*MAX_RPM)/TIME_TO_STOP/(60/(2*PI))) 
 
 
 

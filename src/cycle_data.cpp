@@ -1,12 +1,10 @@
 #include "cycle_data.h"
 
-cycle_data::cycle_data(uint16_t _start_byte)
-{
+cycle_data::cycle_data(uint16_t _start_byte) {
     start_byte = _start_byte;
 }
 
-void cycle_data::loadDataFromMem()
-{
+void cycle_data::loadDataFromMem() {
     cycle_data_vars data;
     eeprom_read_block((void *)&data, (void *)start_byte, sizeof(data));
 
@@ -33,8 +31,8 @@ void cycle_data::loadDataFromMem()
     // is_accel_smooth = temp_word & 1;
     // is_bidirectional = (temp_word >> 1) & 1;
 }
-void cycle_data::writeDataToMem()
-{
+
+void cycle_data::writeDataToMem() {
 
     // Serial.print(F("Writing to EEPROM... "));
 
@@ -53,8 +51,7 @@ void cycle_data::writeDataToMem()
     // Serial.println(F("Done"));
 }
 
-uint8_t cycle_data::sizeOfCycleData()
-{
+uint8_t cycle_data::sizeOfCycleData() {
     cycle_data_vars data;
     return sizeof(data);
 }

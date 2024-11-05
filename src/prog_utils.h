@@ -52,8 +52,11 @@ uint8_t digitToX(uint8_t digit)
     // -24 = 1
     // -12 = 2
     //  -6 = 3 
-    const uint8_t LUT[3] = {SCREEN_WIDTH - 4 * 6 , SCREEN_WIDTH - 2 * 6, SCREEN_WIDTH - 1 * 6}; 
+    
+	//return SCREEN_WIDTH - (1<<(3-digit))*6;
+	const uint8_t LUT[3] = {SCREEN_WIDTH - 4 * 6 , SCREEN_WIDTH - 2 * 6, SCREEN_WIDTH - 1 * 6}; 
     return LUT[digit - 1];
+
 
     // if (digit == 1)
     //     return SCREEN_WIDTH - 4 * 6;
@@ -74,7 +77,7 @@ uint8_t scrollText_8(char *text, uint8_t cursor, uint8_t counter)
 	uint8_t len = (strlen(text)) / 2 -1;
 	if (len >= TEXT_MAX_LEN_8)
 	{
-		if ((uint16_t)millis() - prev_scroll_time_8 >= 1000 / SCROLL_FREQ)
+		if ((uint16_t)millis() - prev_scroll_time_8 >= SCROLL_PERIOD)
 		{
 			// char* tmp[strlen(text)+1];
 

@@ -13,14 +13,12 @@
 
 
 // возвращает true если eeprom инициализируется впервые
-bool check_if_first_init()
-{
+bool check_if_first_init() {
     uint8_t first_byte_in_EEPROM;
     //bool is_it_first_init = false;
     first_byte_in_EEPROM = eeprom_read_byte((uint8_t *)0);
     // на случай если заводские данные отличаются от 255 в каждом байте
-    if (first_byte_in_EEPROM != 255)
-    {
+    if (first_byte_in_EEPROM != 255) {
         return false;
         // is_it_first_init = first_byte_in_EEPROM & 0b00000001;
 
@@ -36,17 +34,15 @@ bool check_if_first_init()
 // новое значение указателя, а если нет, то старое. Указатель буферизируется и не меняется
 // внутри функции
 //  НЕ РЕНДЕРЕР
-uint8_t upDown(uint8_t ptr, uint8_t items)
-{
+uint8_t upDown(uint8_t ptr, uint8_t items) {
     uint8_t tmp = ptr;
 
     //up.tick();
     //down.tick();
-    if (up.click()) // (u8g2.getMenuEvent() == UP)
-    {   
+    if (up.click()) {
+    //if (u8g2.getMenuEvent() == UP)
         debugln(F("Up"));
-        if (ptr - 1 < 0)
-        {
+        if (ptr - 1 < 0) {
             u8g2.drawHLine(10, 0, SCREEN_WIDTH - 20); // если упремся в потолок меню, рисуем полоску сверху
             u8g2.updateDisplay();
             delay(250);
@@ -60,11 +56,10 @@ uint8_t upDown(uint8_t ptr, uint8_t items)
         //refresh_screen = true;
         //return tmp;
     }
-    if (down.click())   //else if (u8g2.getMenuEvent() == DOWN)
-    {
+    if (down.click()) {
+    //else if (u8g2.getMenuEvent() == DOWN)
         debugln(F("down"));
-        if (ptr + 1 > (uint8_t)(items - 1))
-        {
+        if (ptr + 1 > (uint8_t)(items - 1)) {
             u8g2.drawHLine(10, SCREEN_HEIGHT - 1, SCREEN_WIDTH - 20); // аналогичная прямая
             u8g2.updateDisplay();
             delay(250);
@@ -103,20 +98,19 @@ uint8_t upDown(uint8_t ptr, uint8_t items)
 
 // }
 // TODO: ПРАКТИЧЕСКИ АНАЛОГИЧНА ДВУМ ДРУГИМ. ОПТИМИЗИРОВАТЬ
-uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4)
-{
+uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4) {
     uint8_t tmp = curr_pos;
 
     //left.tick();
     //right.tick();
 
-    if (left.click())// (u8g2.getMenuEvent() == LEFT)
-    {   
+    if (left.click()) {
+    //if (u8g2.getMenuEvent() == LEFT)   
         debugln(F("left"));
         tmp = constrain(curr_pos - 1, 1, num_items - 1);
     }
-    if (right.click()) //else if (u8g2.getMenuEvent() == RIGHT)
-    {
+    if (right.click()) {
+    //else if (u8g2.getMenuEvent() == RIGHT)
         debugln(F("right"));
         tmp = constrain(curr_pos + 1, 1, num_items - 1);
     }
@@ -131,11 +125,10 @@ uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4)
 
   if (mySubstring != nullptr) {
       Serial.println(mySubstring);
-      delete[] mySubstring; // Don't forget to free the memory
+      delete[] mySubstring; // не забудь очистить память, дурачок (ты помнишь к чему приводит отсутствие этой строчки)
   }
 */
-char *substring(const char *str, uint8_t start, uint8_t end)
-{
+char *substring(const char *str, uint8_t start, uint8_t end) {
     // if (str == nullptr || start > end || start >= strlen(str))
     // {
     //     debugln("substring error");
@@ -147,9 +140,9 @@ char *substring(const char *str, uint8_t start, uint8_t end)
 
     if (substr_length < 2) 
         return nullptr;
-    char *substr = new char[substr_length + 1]; // +1 for the null terminator
+    char *substr = new char[substr_length + 1]; // +1 из-за \n
 
-    // Use memcpy to copy the substring into the new variable
+    // Скопируем строку в новую переменную
     memcpy(substr, str + 2*start, substr_length);
 
     // Don't forget to null-terminate the new string
@@ -158,9 +151,8 @@ char *substring(const char *str, uint8_t start, uint8_t end)
 }
 
 // рассчет порядка числа
-uint8_t calculateOrder(uint8_t number)
-{   
-    //"тупая" реализация экономит 42б. хех
+uint8_t calculateOrder(uint8_t number) {   
+    // Не индусский код, а оптимизация памяти: "тупая" реализация экономит 42б. хех
     switch (number) {
         case 0: return 0;
         case 1 ... 9: return 1;

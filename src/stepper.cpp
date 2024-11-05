@@ -1,5 +1,7 @@
 #include "stepper.h"
 
+//#define POWER_LOSS
+
 //! Структура, содержащая данные, используемые в преывании
 speedRampData srd;
 //! Используется как буффер при подгрузке данных из памяти. Нет необходимости, дубликат
@@ -224,16 +226,15 @@ ISR(TIMER1_COMPA_vect)
 	volatile static uint32_t rest = 0;
 
 #ifdef POWER_LOSS
-	if (pwr_loss)
-	{
+
+	if (pwr_loss) {
 		// отловили отключение энергии
 		saveRampState();
 		pwr_loss = false;
 		need_to_stop = true; // Попытаемся затормозить насколько хватит энергии
 	}
 
-	if (is_restoring)
-	{
+	if (is_restoring) {
 		debugln(F("Restoring motor state vector"));
 		// Если востанавливаем состояние рампы после нежелательного перезапуска
 		restoreRampState();
@@ -553,14 +554,16 @@ inline void doTheFStep(bool dir)
 
 	digitalWrite(STEP_PIN, HIGH);
 	// PORTD |= (1 << STEP_PIN); //digitalWrite(STEP_PIN, HIGH);
+	// TODO проверить можем ли мы убрать эту штуку. Пусть 800ш/об, редукция 1:3, 300 об/мин (верхняя оценка) -> 12'000 ш/с
+	// это будет занимать 24мс каждую секунду на макс. скорости, или 2.4% такта
 	delayMicroseconds(2);
 	// PORTD &= ~(1 << STEP_PIN); //digitalWrite(STEP_PIN, LOW);
 	digitalWrite(STEP_PIN, LOW);
 }
 
-void printRampData()
-{
 
+// Дебаг - вывод всех значений параметров рампы из буффера
+void printRampData() {
 	debug(F("run_state: "));
 	debugln(srd.run_state);
 	debug(F("dir: "));
@@ -589,8 +592,8 @@ void printRampData()
 	debugln(srd.t_pause);
 }
 
-void printRampDataEEPROM()
-{
+// Дебаг - вывод всех значений параметров рампы из EEPROM
+void printRampDataEEPROM() {
 	debug(F("run_state: "));
 	debugln(eeprom_read_byte((uint8_t *)RAMP_FIRST_BYTE));
 	debug(F("dir: "));
@@ -620,8 +623,7 @@ void printRampDataEEPROM()
 }
 
 // TODO: проверить что srd позволяет восстановить информацию
-void restoreRampState()
-{
+void restoreRampState() {
 	/*
 	  srd.run_state = eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE);
 	  srd.dir = eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE+1);
@@ -641,8 +643,7 @@ void restoreRampState()
 	//startMotor();	// TODO: необходимо повторно просмотреть процедуру восстановления контроля
 }
 
-void saveRampState()
-{
+void saveRampState() {
 
 	/*eeprom_update_word((uint8_t *)RAMP_FIRST_BYTE, srd.run_state);//
 	  eeprom_update_word((uint8_t *)(RAMP_FIRST_BYTE+1), srd.dir);//
@@ -682,37 +683,30 @@ void saveRampState()
  *  \param x  Value to find square root of.
  *  \return  Square root of x.
  */
-uint32_t m_sqrt(uint32_t x)
-{
+uint32_t m_sqrt(uint32_t x) {
 	uint32_t xr; // result register
 	uint32_t q2; // scan-bit register
 	bool f;	  // flag (one bit)
 
 	xr = 0;			  // clear result
 	q2 = 0x40000000L; // higest possible result bit
-	do
-	{
-		if ((xr + q2) <= x)
-		{
+	do {
+		if ((xr + q2) <= x) {
 			x -= xr + q2;
 			f = true; // set flag
 		}
-		else
-		{
+		else {
 			f = false; // clear flag
 		}
 		xr >>= 1;
-		if (f)
-		{
+		if (f) {
 			xr += q2; // test flag
 		}
 	} while (q2 >>= 2); // shift twice
-	if (xr < x)
-	{
+	if (xr < x) {
 		return xr + 1; // add for rounding
 	}
-	else
-	{
+	else {
 		return xr;
 	}
 }

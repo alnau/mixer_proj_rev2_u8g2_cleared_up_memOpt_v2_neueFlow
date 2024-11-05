@@ -4,8 +4,7 @@
 #include "constants.h"
 #include "libs_header.h"
 
-struct cycle_data_vars
-{
+struct cycle_data_vars {
     uint16_t t_accel;
     uint8_t v_const;
     uint16_t t_const;
@@ -15,8 +14,7 @@ struct cycle_data_vars
     uint8_t flags;
 };
 
-class cycle_data
-{
+class cycle_data {
 private:
     uint16_t start_byte;
 
