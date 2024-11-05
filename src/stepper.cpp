@@ -6,10 +6,12 @@
 speedRampData srd;
 //! Используется как буффер при подгрузке данных из памяти. Нет необходимости, дубликат
 
-/*! \brief Функция сводящая необходимые мне параметры на язык AVR446
+
+/**
+ * @brief Функция сводящая необходимые мне параметры на язык технической заметки AVR446
  *
- * Пересчитывает велечины из об/мин в 0.01 рад/с. Также рассчитывает ускорение,
- * Замдление и кол-во шагов.
+ * Пересчитывает велечины из об/мин в 0.01 рад/с. Также рассчитывает параметры,
+ * задающие ускорение, замдление и кол-во шагов. 
  */
 void startMotor()
 {
@@ -190,8 +192,10 @@ void startMotor()
 	// 	}
 	// }
 
-/*! \brief Инициализация счетчика на Timer1.
- *
+/**
+ * @brief Инициализация счетчика на Timer1
+ * 
+ * Он "держит время" до следующего шага (см ISR ниже)
  */
 void initTimer1(void)
 {
@@ -208,11 +212,17 @@ void initTimer1(void)
 	debugln(F("STOP"));
 }
 
-/*! \brief Прерывание, которое триггерится по таймеру
+
+
+/** 
+ * @brief Отработка прерывания, которое триггерится по таймеру и 
+ * обновление времени до следующего пересчета
  *
  *  При совпадения счетчика таймера и содержимого OCR1A
  *  вызывается это прерывание. В нем находится основная логика
  *  рассчета числа тиков таймера до следующего шага
+ * 
+ * Я даже не буду описывать логику этой фуекци. См комментарии внутри и AVR446
  */
 ISR(TIMER1_COMPA_vect)
 {
@@ -522,6 +532,13 @@ ISR(TIMER1_COMPA_vect)
 	srd.step_delay = new_step_delay;
 }
 
+/**
+ * @brief Инициализация драйвера шагового двигателя
+ * 
+ * Запускаем каналы драйвера как выход, отпукаем удержание двигателя 
+ * Высокий ENA-канал - на двигателе нет тока и он свободно прокручивается
+ * 
+ */
 void initStepper()
 {
 
@@ -537,9 +554,17 @@ void initStepper()
 	// PORTD |= (1<< ENA_PIN);  //digitalWrite(ENA_PIN, HIGH);
 }
 
+/**
+ * @brief Делает шаг в нужном направлении
+ * 
+ * Сначала передает на драйвер шагового двигателя направление шага, затем
+ * последовательно отправляет высокий и низкий сигнал на STEP-канал драйвера, заставляя 
+ * его сделать шаг
+ * 
+ * @param dir булева переменная, задающая направление вращение. Соглашение: CCW = true, CW = false
+ */
 inline void doTheFStep(bool dir)
 {
-	
 	digitalWrite(DIR_PIN, dir);
 	// if (dir == CCW)
 	// {
@@ -622,7 +647,7 @@ void printRampDataEEPROM() {
 	debugln(eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE + 26));
 }
 
-// TODO: проверить что srd позволяет восстановить информацию
+// TODO: проверить что srd позволяет восстановить информаци
 void restoreRampState() {
 	/*
 	  srd.run_state = eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE);
@@ -673,15 +698,17 @@ void saveRampState() {
 
 }
 
-/*! \brief Square root routine.
- *
+
+/**
+ * @brief 	Square root routine
+ * 
  * sqrt routine 'grupe', from comp.sys.ibm.pc.programmer
  * Subject: Summary: SQRT(int) algorithm (with profiling)
  *    From: warwick@cs.uq.oz.au (Warwick Allison)
  *    Date: Tue Oct 8 09:16:35 1991
- *
- *  \param x  Value to find square root of.
- *  \return  Square root of x.
+ * 
+ * @param x Value to find square root of.
+ * @return 	Square root of x.
  */
 uint32_t m_sqrt(uint32_t x) {
 	uint32_t xr; // result register

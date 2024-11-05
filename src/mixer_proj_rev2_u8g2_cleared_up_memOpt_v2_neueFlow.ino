@@ -21,8 +21,13 @@ void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
 //prog_data PROG_DATA(PROG_FIRST_BYTE);
 
 
-//задаем дефолтные значения рабочего режима, записываем их в энергонезависимую память
-//а также задаем стандартные "настройки" в первый байт EEPROM
+
+/**
+ * @brief Подгружаем и обновляем данные, хранимые в EEPROM
+ *
+ * задаем дефолтные значения рабочего режима, записываем их в энергонезависимую память
+ * а также задаем стандартные "настройки" в первый байт EEPROM
+ */
 inline void initData() {
   if (check_if_first_init()) {
     //если устройство запускается впервые
@@ -55,6 +60,13 @@ inline void initData() {
   //PROG_DATA.load_data_to_buff(0,0);
 }
 
+/**
+ * @brief Обновляет флаги настроек
+ * 
+ * загружает из EEPROM регистр, в котором хранятся данные настроек
+ * и с помощью побитовой магии переводит содержимое регистра в булевы значения флагов
+ * 
+ */
 inline void loadSettigsRegister() {
   uint8_t data_container = 0;
   data_container = eeprom_read_byte((uint8_t*)0);  //xxx(SAFE)(PROG)(SOUND)(EMERG)(INIT)
@@ -63,7 +75,11 @@ inline void loadSettigsRegister() {
   need_sound = (data_container >> 2) & 0b00000001;
 }
 
-
+/**
+ * @brief Инициализация дисплея
+ * 
+ * Вроде, все очевидно, как по учебнику u8g2
+ */
 inline void initDisplay() {
   
   u8g2.begin();
@@ -76,7 +92,18 @@ inline void initDisplay() {
   //refresh_screen = true;
 }
 
-
+/**
+ * @brief отработка потери энергии при отключении системы от сети
+ * 
+ * если обаруживает потерю в состоянии работы, выставляет соответствующий флаг pwr_loss
+ * (его должен отловить ISR, остановить работу двигателя и параллельно, в панике, сохранять
+ * текущие данные рампы)
+ * 
+ * В свою очередь, функция выставляет флаг аварийной остановки 1 байт (с учетом отсчета с нуля, 
+ * маска 0b00000010) по адресу 0x00 @ EEPROM. По нему контроллер во время инициализации 
+ * может понять, что последнее выключение было "катастрофическим" 
+ * 
+ */
 inline void powerLoss() {
   
   if (is_working) {
@@ -100,36 +127,15 @@ inline void powerLoss() {
 }
 
 
-
-void setup() {
-
-#ifdef IS_DEBUG
-  Serial.begin(BAUD_RATE);
-  while(!Serial) {
-    ;
-  }
-#endif
-  //pinMode(BUZZER, OUTPUT);
-  initDisplay();
-  initData();
-  initStepper();
-  initTimer1();
-  checkEmergencyStop();
-  menu_ptr = SPEED;
-  need_to_load_interface = true;
-
-  //TODO обходится в 240б, что дорого. В финальной версии нужно 
-  //реализовать на более низком уровне
-  //attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
-
-  debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
-}
-
-
-
-// проверяем при инициализации на факт, того что прошлый запуск процесса мешалки не закончился
-// аварийной остановкой и, если так, то сообщаем об этом пользователю
-// НЕ РЕНДЕРЕР
+/**
+ * @brief проверяем, не было ли аварийной остановки
+ *
+ * проверяем при инициализации на факт, того что прошлый запуск процесса мешалки не закончился
+ * аварийной остановкой и, если так, то сообщаем об этом пользователю
+ * 
+ * НЕ РЕНДЕРЕР
+ * 
+ */
 void checkEmergencyStop() {
   //emergency_stop = true;
   if (emergency_stop) {
@@ -193,8 +199,38 @@ void checkEmergencyStop() {
 }
 
 
-//выводит разделы главного меню
-// РЕНДЕРЕР
+
+
+void setup() {
+
+#ifdef IS_DEBUG
+  Serial.begin(BAUD_RATE);
+  while(!Serial) {
+    ;
+  }
+#endif
+  //pinMode(BUZZER, OUTPUT);
+  initDisplay();
+  initData();
+  initStepper();
+  initTimer1();
+  checkEmergencyStop();
+  menu_ptr = SPEED;
+  need_to_load_interface = true;
+
+  // //TODO обходится в 240б, что дорого. В финальной версии нужно 
+  // //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
+  // //к именно этой строчке)
+  // attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
+
+  debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
+}
+
+/**
+ * @brief выводит разделы главного меню 
+ *
+ * РЕНДЕРЕР 
+ */
 void printMainMenu() {
   for (uint8_t i = 0; i < MM_ITEMS; i++) {
     u8g2.setCursor(8, 4 + 8 + 16 * i);
@@ -1260,7 +1296,6 @@ void printScrollBar(uint8_t ptr, uint8_t num_items) {
 }
 
 
-
 inline void scanButtons() {
   enter.tick();
   func.tick();
@@ -1279,19 +1314,7 @@ inline void scanButtons() {
   */
 }
 
-/*
- * повторю комментарий, написанный выше:
- * Тут нужно пояснение
- * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
- * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
- * всго за один такт      
-*/
-void loop() {
-  //pinMode(ENA_PIN, OUTPUT);
-  //digitalWrite(ENA_PIN, HIGH);
-
-  scanButtons();
-  //debugln(menu_ptr);
+inline void tickMenu() {
   switch(menu_ptr) {
     case SPEED: 
       speedMenu();
@@ -1368,52 +1391,28 @@ void loop() {
       menu_ptr = SETTINGS;
       //need_to_load_interface = true;
       break;
-
-      
   }
+}
 
+inline void refreshScreen() {
   if (refresh_screen) {
     refresh_screen = false;
     u8g2.updateDisplay();
   }
-  // меню выбора программы
-  // меню программирования 
-  
-
-  
 }
 
-void printWarning() {
-
-  
-  u8g2.clear(); 
-  if (menu_ptr == CYCLE) {
-    u8g2.setCursor(4, 4 + 8);
-    u8g2.print(F("Устройство работает."));
-
-    u8g2.setCursor(4, 4 + 24);
-    u8g2.print(F("Изменение настроек"));
-
-    u8g2.setCursor(4, 4 + 40);
-    u8g2.print(F("невозможно"));
-  }
-  else {
-
-    u8g2.setCursor(4, 4 + 8);
-    u8g2.print(F("Пока не реализовано."));
-
-    u8g2.setCursor(4, 4 + 24);
-    u8g2.print(F("Работа ведется."));
-  }
-  
-  u8g2.drawFrame(63-5 - 2, 60 - 9, 10 + 4, 9+3);
-  u8g2.setCursor(63-5, 60);
-  u8g2.print(F("Ok"));
-  //u8g2.drawButtonUTF8(63, 60, U8G2_BTN_HCENTER | U8G2_BTN_BW1, 0, 2, 1, "Ok");
-  u8g2.updateDisplay();
-  while (!enter.click()) {
-    enter.tick();
-  }
-  return;    
+/*
+ * повторю комментарий, написанный выше:
+ * Тут нужно пояснение
+ * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
+ * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
+ * всго за один такт      
+*/
+void loop() {
+ 
+  scanButtons();
+  tickMenu();
+  refreshScreen();
 
 }
+

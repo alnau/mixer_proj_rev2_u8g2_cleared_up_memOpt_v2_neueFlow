@@ -5,6 +5,8 @@
 // #include "constants.h"
 // #include "libs_header.h"
 
+#include "global_variables.h"
+
 #include <avr/eeprom.h>
 #include "io_constructor.h"
 #include "constants.h"
@@ -77,27 +79,8 @@ uint8_t upDown(uint8_t ptr, uint8_t items) {
     return tmp;
 }
 
-// аналогично up_down толька выводит перескакивание по порядкам в трехзначных числах
-// //  TODO: ПРАКТИЧЕСКИ АНАЛОГИЧНА ДВУМ ДРУГИМ. ОПТИМИЗИРОВАТЬ
-// uint8_t leftRight(uint8_t digit)
-// {
 
-//     uint8_t tmp = digit;
-//     //left.tick();
-//     //right.tick();
-
-//     if (left.click())      // (u8g2.getMenuEvent() == LEFT)
-//     {
-//         tmp = constrain(digit - 1, 1, 3);
-//     }
-//     else if (right.click())// if (u8g2.getMenuEvent() == RIGHT)
-//     {
-//         tmp = constrain(digit + 1, 1, 3);
-//     }
-//     return tmp;
-
-// }
-// TODO: ПРАКТИЧЕСКИ АНАЛОГИЧНА ДВУМ ДРУГИМ. ОПТИМИЗИРОВАТЬ
+// обрабатывает перескакивание влево-вправо по порядкам в трехзначных числах Функция полностью аналогична upDown
 uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4) {
     uint8_t tmp = curr_pos;
 
@@ -176,5 +159,36 @@ uint8_t calculateOrder(uint8_t number) {
     // }
 }
 
+void printWarning() {
+  u8g2.clear(); 
+  if (menu_ptr == CYCLE) {
+    u8g2.setCursor(4, 4 + 8);
+    u8g2.print(F("Устройство работает."));
+
+    u8g2.setCursor(4, 4 + 24);
+    u8g2.print(F("Изменение настроек"));
+
+    u8g2.setCursor(4, 4 + 40);
+    u8g2.print(F("невозможно"));
+  }
+  else {
+
+    u8g2.setCursor(4, 4 + 8);
+    u8g2.print(F("Пока не реализовано."));
+
+    u8g2.setCursor(4, 4 + 24);
+    u8g2.print(F("Работа ведется."));
+  }
+  
+  u8g2.drawFrame(63-5 - 2, 60 - 9, 10 + 4, 9+3);
+  u8g2.setCursor(63-5, 60);
+  u8g2.print(F("Ok"));
+  //u8g2.drawButtonUTF8(63, 60, U8G2_BTN_HCENTER | U8G2_BTN_BW1, 0, 2, 1, "Ok");
+  u8g2.updateDisplay();
+  while (!enter.click()) {
+    enter.tick();
+  }
+  return;    
+}
 
 #endif

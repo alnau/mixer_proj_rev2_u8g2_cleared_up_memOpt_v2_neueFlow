@@ -1,9 +1,21 @@
 #include "cycle_data.h"
 
+/**
+ * @brief конструктор  нового объекта cycle_data
+ * 
+ * Используется для удобства хранения данных цикла работы шагового двигателя в 
+ * энергонезависимой (EEPROM) памяти 
+ * 
+ * @param _start_byte номер байта, с которого начинается запись блока, связанного с циклом в EEPROM
+ */
 cycle_data::cycle_data(uint16_t _start_byte) {
     start_byte = _start_byte;
 }
 
+/**
+ * @brief Подгружает данные рампы из EEPROM и записывает их в буффер
+ * 
+ */
 void cycle_data::loadDataFromMem() {
     cycle_data_vars data;
     eeprom_read_block((void *)&data, (void *)start_byte, sizeof(data));
@@ -32,6 +44,11 @@ void cycle_data::loadDataFromMem() {
     // is_bidirectional = (temp_word >> 1) & 1;
 }
 
+
+/**
+ * @brief Сохраняет данные из буффера в EEPROM
+ * 
+ */
 void cycle_data::writeDataToMem() {
 
     // Serial.print(F("Writing to EEPROM... "));
@@ -51,6 +68,11 @@ void cycle_data::writeDataToMem() {
     // Serial.println(F("Done"));
 }
 
+/**
+ * @brief возвращает размер, занимаемый структурой с данными рампы
+ * 
+ * @return uint8_t. Размер в байтах
+ */
 uint8_t cycle_data::sizeOfCycleData() {
     cycle_data_vars data;
     return sizeof(data);
