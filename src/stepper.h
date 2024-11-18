@@ -75,4 +75,3 @@ void printRampData();
 void printRampDataEEPROM();
 void restoreRampState();
 void saveRampState();
-uint32_t stoppingRoutine(uint32_t counter);

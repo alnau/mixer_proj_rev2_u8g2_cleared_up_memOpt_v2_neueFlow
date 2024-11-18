@@ -510,9 +510,6 @@ ISR(TIMER1_COMPA_vect)
 					noInterrupts();
 					TCCR1A = 0;
 					TCCR1B = (1 << WGM12) | ((0 << CS12) | (1 << CS11) | (1 << CS10)); // Выставляем CTC (Clear Timer on Compare Match mode)
-
-					//TCCR1B |= ; // вернем делитель на 64
-
 					//TIMSK1 = (1 << OCIE1A);
 					OCR1A = new_step_delay; // На всякий случай
 					interrupts();
@@ -579,7 +576,7 @@ inline void doTheFStep(bool dir)
 
 	digitalWrite(STEP_PIN, HIGH);
 	// PORTD |= (1 << STEP_PIN); //digitalWrite(STEP_PIN, HIGH);
-	// TODO проверить можем ли мы убрать эту штуку. Пусть 800ш/об, редукция 1:3, 300 об/мин (верхняя оценка) -> 12'000 ш/с
+	// TODO: проверить можем ли мы убрать эту штуку. Пусть 800ш/об, редукция 1:3, 300 об/мин (верхняя оценка) -> 12'000 ш/с
 	// это будет занимать 24мс каждую секунду на макс. скорости, или 2.4% такта
 	delayMicroseconds(2);
 	// PORTD &= ~(1 << STEP_PIN); //digitalWrite(STEP_PIN, LOW);
@@ -647,7 +644,7 @@ void printRampDataEEPROM() {
 	debugln(eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE + 26));
 }
 
-// TODO: проверить что srd позволяет восстановить информаци
+//! TODO: проверить что srd позволяет восстановить информаци
 void restoreRampState() {
 	/*
 	  srd.run_state = eeprom_read_word((uint8_t *)RAMP_FIRST_BYTE);
@@ -665,7 +662,7 @@ void restoreRampState() {
 	  srd.t_pause = eeprom_read_word((uint16_t *)RAMP_FIRST_BYTE+26);
 	*/
 	eeprom_read_block((void *)&srd, (uint16_t *)RAMP_FIRST_BYTE, sizeof(srd));
-	//startMotor();	// TODO: необходимо повторно просмотреть процедуру восстановления контроля
+	//startMotor();	//! TODO: необходимо повторно просмотреть процедуру восстановления контроля
 }
 
 void saveRampState() {
@@ -757,6 +754,7 @@ uint32_t m_sqrt(uint32_t x) {
 // 	return xr;
 // }
 
+//! TODO: ВАЖНО! ЕСТЬ ХОРШАЯ ВЕРОЯТНОСЬ ЧТО ЭТА ФУНКЦИЙ НЕ РАБОТАЕТ - НЕ СМОГ ПОЛУЧИТЬ РЕЗУЛЬТАТ В WOKWI 
 /*
 // в среднем 0.15 мс на операцию вплоть до x <= 1e4
 // при делителе частоты 256 получается ок 10 тиков на операцию. Т.О. 
