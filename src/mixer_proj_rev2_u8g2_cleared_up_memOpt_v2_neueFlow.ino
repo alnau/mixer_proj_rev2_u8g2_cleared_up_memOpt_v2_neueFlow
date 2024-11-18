@@ -232,7 +232,7 @@ void setup() {
   // //TODO обходится в 240б, что дорого. В финальной версии нужно 
   // //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
   // //к именно этой строчке)
-  //attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
+  //attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
 
   debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
