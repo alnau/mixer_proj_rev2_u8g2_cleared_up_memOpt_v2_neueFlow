@@ -1,5 +1,6 @@
 ## Структура хранения данных в EEPROM
 
+(TODO ТРЕБУЕТСЯ ОБНОВЛЕНИЕ С УЧЕТОМ ИЗМЕНЕНИЙ ПОСЛЕ ДЕКАБРЯ 2023)
 ### 1) Нулевой байт eeprom отведен для стандартных булевых значений:
 
 * 0 - происходила ли инициализация 
@@ -51,7 +52,7 @@ PT3 | PT2 | PT1 | PT0 | x | PNUM2 | PNUM1 | PNUM0
 num_cycles  лежит в start_byte + 5 $\times$ SIZE_OF_DATA
 * is_accel_smooth , is_bidirectional лежат соответственно в первом и втором бите байта находящегося 
 по адресу start_byte + 6 $\times$ SIZE_OF_DATA (напр 0b00000010 эквивалентен is_accel_smooth = false , 
-is_bidirectional = true)\
+is_bidirectional = true)
 
 Таким образом, все данные занимают 5 $\times$ SIZE_OF_DATA + 1 байт
 

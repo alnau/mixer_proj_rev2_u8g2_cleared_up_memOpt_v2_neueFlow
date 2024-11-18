@@ -19,7 +19,7 @@ void startMotor()
 	//srd.dir = CCW;
 
 	srd.speed = 10 * PI * R_REDUCTION * CYCLE_DATA.v_const / 3; //(2*3.14*100*RPM)/(60);
-	int32_t step = (int32_t)CYCLE_DATA.v_const * (int32_t)SPR * (int32_t)(CYCLE_DATA.t_const + (CYCLE_DATA.t_slowdown + CYCLE_DATA.t_accel) / 2) / 60;
+	int32_t step = (int32_t)CYCLE_DATA.v_const * R_REDUCTION * (int32_t)SPR * (int32_t)(CYCLE_DATA.t_const + (CYCLE_DATA.t_slowdown + CYCLE_DATA.t_accel) / 2) / 60;
 	srd.accel = srd.speed / CYCLE_DATA.t_accel;
 	srd.decel = srd.speed / CYCLE_DATA.t_slowdown;
 	uint32_t max_s_lim;
@@ -60,7 +60,7 @@ void startMotor()
 
 	// Ввести верхний предел скорости, рассчитав минимальную паузу
 	// min_delay = (alpha / tt)/ w
-	srd.min_delay = A_T_x100 / srd.speed;
+	srd.min_delay = A_T_x100 / srd.speed ;
 
 	// Находим паузу до первого шага (c_0) для того, чтобы задать ускорение
 	// step_delay = 1/tt * sqrt(2*alpha/accel)
@@ -241,7 +241,7 @@ ISR(TIMER1_COMPA_vect)
 		// отловили отключение энергии
 		saveRampState();
 		pwr_loss = false;
-		need_to_stop = true; // Попытаемся затормозить насколько хватит энергии
+		//need_to_stop = true; // Попытаемся затормозить насколько хватит энергии
 	}
 
 	if (is_restoring) {

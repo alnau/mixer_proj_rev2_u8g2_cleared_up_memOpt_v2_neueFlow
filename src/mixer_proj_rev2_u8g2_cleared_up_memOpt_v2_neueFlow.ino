@@ -110,16 +110,27 @@ inline void powerLoss() {
     noInterrupts();
 
     pwr_loss = true;
-
+    u8g2.setPowerSave(1);
     uint8_t eeprom_0x00 = eeprom_read_byte(0);
     bitWrite(eeprom_0x00, 1, 1);                            //установили флаг аварийной остановки
     //eeprom_0x00 = setBit(eeprom_0x00, working_in_programming_mode, 4);  //записали из какого режима велась работа
     eeprom_update_byte(0, eeprom_0x00);
 
-    debugln(F("Emergency stop byte is set. Saving ramp state..."));
     interrupts();
-    debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
+    //debugln(F("Emergency stop byte is set. Saving ramp state..."));
+    //debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
+    u8g2.setPowerSave(0);
 
+    uint32_t time_of_detection = millis();
+    while (true) {
+      if (millis() - time_of_detection > 10000){
+        // отловили ложную тревогу если спустя 10 с не отключились
+        bitWrite(eeprom_0x00, 1, 0);                            //сняли флаг аварийной остановки
+        eeprom_update_byte(0, eeprom_0x00);
+        pwr_loss = false;
+        return;
+      }
+    }
     return;
   } 
   else
@@ -190,7 +201,7 @@ void checkEmergencyStop() {
         //noTone(BUZZER);
         emergency_stop = false;
         uint8_t tmp = eeprom_read_byte((uint8_t*)0);
-        tmp = tmp & ~(1<<1);  //вернули второй бит в состояние 0 !TODO: может быть факп
+        tmp = tmp & 0b11111101;  //вернули второй бит в состояние 0 TODO: может быть факп
         eeprom_update_byte((uint8_t*)0, tmp);
         return;
       }
@@ -214,14 +225,14 @@ void setup() {
   initData();
   initStepper();
   initTimer1();
-  checkEmergencyStop();
+  //checkEmergencyStop();
   menu_ptr = SPEED;
   need_to_load_interface = true;
 
   // //TODO обходится в 240б, что дорого. В финальной версии нужно 
   // //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
   // //к именно этой строчке)
-  // attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
+  //attachInterrupt(digitalPinToInterrupt(PWR_LOSS), powerLoss, FALLING);  
 
   debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
@@ -325,7 +336,7 @@ void speedMenu() {
     if (is_working and (srd.run_state != PAUSE)) {
       // w = ALPHA*f/delay[рад/с]
       // RPM = w/(2*pi)*60 [об/мин]
-      speed = (uint8_t)(SCALER/(srd.step_delay));
+      speed = (uint8_t)(SCALER/(srd.step_delay*R_REDUCTION)); //Добавил учет редукции вращения 
       
     }
 
@@ -337,7 +348,7 @@ void speedMenu() {
   //обработка меню при вызове
   if ((is_working or is_stopping) or refresh_screen ) {
     if (srd.run_state != PAUSE)
-      speed = (uint8_t)(SCALER/(srd.step_delay));
+      speed = (uint8_t)(SCALER/(srd.step_delay* R_REDUCTION));  //Добавил учет редукции вращения 
     else 
       speed = 0;
 
