@@ -145,13 +145,14 @@ uint8_t leftRight(uint8_t curr_pos, uint8_t num_items = 4) {
  * их в PROGMEM (см выше) и высвободит 96 байт (минимум. Класс стринг тоже тяжелый)
  * 
  * @example 
-char* mySub = substring(originalString, start, end);
-if (mySubstring != nullptr) {
-    Serial.println(mySubstring);
-    delete[] mySubstring; // не забудь очистить память, дурачок (ты помнишь к чему приводит отсутствие этой строчки)
-}
-
- * @param str исходная строка 
+ *           char* mySub = substring(originalString, start, end);
+ *           if (mySubstring != nullptr) {
+ *               Serial.println(mySubstring);
+ *               delete[] mySubstring; // не забудь очистить память, дурачок 
+ *               // (надеюсь, ты помнишь чему приводит отсутствие этой строчки)
+ *           }
+ *
+ * @param str исходная строка   
  * @param start номер первого символа подстроки 
  * @param end номер последнего символа подстроки
  * @return char* собствено, результирующая подстрока
@@ -185,7 +186,7 @@ char *substring(const char *str, uint8_t start, uint8_t end) {
  * Поверь, весь безбожный код имеет на то причины (см комментарии)
  * 
  * @param number исходное число (положительное, меньше 255)
- * @return uint8_t порядок числа 0 (меньше 10), 1 (меньше 100), 2 (меньше 1000), 3 (иначе. Пока не  спользуется)
+ * @return uint8_t порядок числа 0 (меньше 10), 1 (меньше 100), 2 (меньше 1000), 3 (иначе. Пока не используется)
  */
 uint8_t calculateOrder(uint8_t number) {   
     // Не индусский код, а оптимизация памяти: "тупая" реализация экономит 42б. хех
@@ -210,6 +211,9 @@ uint8_t calculateOrder(uint8_t number) {
     //     }
     //     return order;
     // }
+
+    // ...как и все его альтернативные версии, давно удаленные за ненадобностью, несмотря на 
+    // их изобретательность, да
 }
 
 

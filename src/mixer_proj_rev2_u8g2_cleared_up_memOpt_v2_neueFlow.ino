@@ -99,10 +99,9 @@ inline void initDisplay() {
  * (его должен отловить ISR, остановить работу двигателя и параллельно, в панике, сохранять
  * текущие данные рампы)
  * 
- * В свою очередь, функция выставляет флаг аварийной остановки 1 байт (с учетом отсчета с нуля, 
+ * В свою очередь, функция выставляет флаг аварийной остановки в первый байт (с учетом отсчета с нуля, 
  * маска 0b00000010) по адресу 0x00 @ EEPROM. По нему контроллер во время инициализации 
  * может понять, что последнее выключение было "катастрофическим" 
- * 
  */
 inline void powerLoss() {
   
@@ -172,9 +171,10 @@ void checkEmergencyStop() {
 
     uint16_t last_update_time = (uint16_t)millis();
     //bool is_lit = false;
-    //TODO ВАЖНО ЗДЕСЬ МОЖНО ЗАДАВАТЬ ДЛИНУ СИГНАЛА, ТАК ЧТО МОЖНО УПРОСТИТЬ СИНТАКСИС
     // if (need_sound)
     //   tone(BUZZER, BUZZER_PITCH, 100);
+
+    //! TODO: перейти на GyverBeeper, он ассинхронный и, (вроде) неблокирующий
 
     while (1) {
       //МЕРЦАЙ ЭКРАНОМ И ОРИ
@@ -201,7 +201,7 @@ void checkEmergencyStop() {
         //noTone(BUZZER);
         emergency_stop = false;
         uint8_t tmp = eeprom_read_byte((uint8_t*)0);
-        tmp = tmp & 0b11111101;  //вернули второй бит в состояние 0 TODO: может быть факп
+        tmp = tmp & 0b11111101;  // вернули второй бит в состояние 0 TODO: может быть факап
         eeprom_update_byte((uint8_t*)0, tmp);
         return;
       }
@@ -229,10 +229,10 @@ void setup() {
   menu_ptr = SPEED;
   need_to_load_interface = true;
 
-  // //TODO обходится в 240б, что дорого. В финальной версии нужно 
+  // //! TODO: обходится в 240+ байт, что дорого. В финальной версии нужно 
   // //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
   // //к именно этой строчке)
-  //attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
+  // attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
 
   debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
@@ -579,7 +579,7 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
 }
 
 /*
-  //вывод одной цифры без ведущих нулей. Используется при установки яркости
+  //вывод одной цифры без ведущих нулей. Используется при установке яркости
   void printOneNumber(uint8_t number, uint8_t ptr, bool is_setup) {
 
     u8g2.setDrawColor(0);
@@ -746,8 +746,8 @@ void printSetupPages(uint8_t cursor) {
   }
 }
 
-//обновляет элемент менюшки установки режима вращения под номером cursor.
-//используется для выхода из режима прокрутки текста
+// обновляет элемент менюшки установки режима вращения под номером cursor.
+// используется для выхода из режима прокрутки текста
 // РЕНДЕРЕР
 void refreshMenuItem(char* item, uint8_t cursor) {
   u8g2.setDrawColor(0);
@@ -761,7 +761,7 @@ void refreshMenuItem(char* item, uint8_t cursor) {
   delete[] tmp_substr;
 }
 
-//выводит данные меню установки режима вращения в информационную колонку в правой части экрана
+// выводит данные меню установки режима вращения в информационную колонку в правой части экрана
 // РЕНДЕРЕР
 void printSetupData(uint8_t cursor) {
   if (cursor < 4) {
@@ -832,7 +832,7 @@ bool setupAccel() {
   
 }
 
-//установка режима повторения
+// установка режима повторения
 // НЕ РЕНДЕРЕР
 bool setupRepeat() {
   static bool tmp;
@@ -857,8 +857,8 @@ bool setupRepeat() {
 }
 
 
-//вывод стандартизированного загрузочного окна для меню
-//в конце очищает экран и возвращает курсор домой
+// вывод стандартизированного загрузочного окна для меню
+// в конце очищает экран и возвращает курсор домой
 // РЕНДЕРЕР (НО МОЖНО ДОРАБОТАТЬ)
 void printMenuLoadingScreen(const __FlashStringHelper* menu_name) {
   u8g2.clear();
@@ -871,7 +871,7 @@ void printMenuLoadingScreen(const __FlashStringHelper* menu_name) {
   u8g2.clear();
 }
 
-//функция, вывода и обработки меню режима вращения
+// функция, вывода и обработки меню режима вращения
 // НЕ РЕНДЕРЕР
 void setupCycle() {
 
@@ -939,9 +939,12 @@ void setupCycle() {
     refreshMenuItem(buffer, tmp_ptr);
   }
 
-  //если нужно перейти с первой на вторую на вторую страницу
-  if (((setup_ptr == 4) and (tmp_ptr == 3)) or ((setup_ptr == 3) and (tmp_ptr == 4))) {
-    // TODO: ожидаю что это эквивалентно (setup_ptr | tmp_ptr) == 7 (нет, потому-что 7 | 1 == 7)
+  // если нужно перейти с первой на вторую на вторую страницу
+  // отлавливаем ситуацию, когда один из указателей равен 3, а второй 4. При условии того
+  // что они, по построению, могут отличаться друг от друга на единицу, т.о. эта проверка эквивалентна 
+  // ((setup_ptr == 4) and (tmp_ptr == 3)) or ((setup_ptr == 3) and (tmp_ptr == 4)) и экономит 
+  // ЦЕЛЫХ 6 БАЙТ! (жалкое зрелище, я в курсе)
+  if (tmp_ptr+setup_ptr == 7) {  
     //флаг обновления дисплея выставлен в прошлом if 
     need_change_page = true;
   } else {
@@ -1096,10 +1099,11 @@ void settings() {
     menu_ptr = settings_cursor + 14;
     counter = 0;
 
-    //return; //TODO: (на 18.01) если убрать этот return, то можно сэкономить 2б
+    //return; 
+    //! TODO: (на 18.01) если убрать этот return, то можно сэкономить 2 байта
   }
 
-  //Срезал порядка 50б, но не уверен, что это корректная оптимизация
+  //Срезал порядка 50 байт, но не уверен, что это корректная оптимизация
   //не корректная, это точно, но на настройки пока можно забить
   // if (refresh_screen) {
   //   refreshSettings();
@@ -1107,7 +1111,9 @@ void settings() {
 
   tmp_ptr = settings_cursor;
   settings_cursor = upDown(settings_cursor, SETTINGS_ITEMS);
-  if (((tmp_ptr == 4) and (settings_cursor == 3)) or ((tmp_ptr == 3) and (settings_cursor == 4))) {
+  
+  // Аналогично трюку в setupCycle. См. объяснение там
+  if (tmp_ptr+settings_cursor == 7) {
     //переход со второй страницы на первую
     counter = 0;
     need_change_page = true;
@@ -1315,7 +1321,6 @@ inline void scanButtons() {
   right.tick();
   up.tick();
   down.tick();
-
   /*
     Button::tick(enter);
     Button::tick(func);
@@ -1326,6 +1331,13 @@ inline void scanButtons() {
   */
 }
 
+/*
+ * повторю комментарий, написанный выше:
+ * Тут нужно пояснение
+ * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
+ * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
+ * всго за один такт      
+*/
 inline void tickMenu() {
   switch(menu_ptr) {
     case SPEED: 
@@ -1413,13 +1425,6 @@ inline void refreshScreen() {
   }
 }
 
-/*
- * повторю комментарий, написанный выше:
- * Тут нужно пояснение
- * хитрый хак в стиле switch. Все литралы сетапов равны 6..13 (см constants.h), соответственно, в данной
- * реализации вычитание шестерки из setup_ptr автоматически вычисляет нужный литерал
- * всго за один такт      
-*/
 void loop() {
  
   scanButtons();
