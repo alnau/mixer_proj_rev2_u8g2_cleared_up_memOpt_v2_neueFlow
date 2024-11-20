@@ -705,6 +705,7 @@ uint8_t scrollText(char* text, uint8_t cursor, uint8_t counter, uint8_t cutoff =
     }
     else {
       //!!! TODO: в теории, эту проверку можно перенести на substring, заменяя end на strlen
+      //! TODO: последние два return, вероятно, можно объединить в один. Ну если этого еще не сделал компилятор
       u8g2.print(text);
       return counter;
     }
@@ -822,7 +823,7 @@ bool setupAccel() {
     printAccelRegime(tmp, false);
     menu_ptr = CYCLE;
     need_update_EEPROM = true;
-    return tmp;
+    //return tmp;
   }
   else if (up.click() or down.click())  {
     tmp = !tmp;
@@ -847,7 +848,7 @@ bool setupRepeat() {
     printCycleRegime(tmp, false);
     menu_ptr = CYCLE;
     need_update_EEPROM = true;
-    return tmp;
+    //return tmp;
   }
   else if (up.click() or down.click()) {
     tmp = !tmp;
@@ -1100,7 +1101,7 @@ void settings() {
     counter = 0;
 
     //return; 
-    //! TODO: (на 18.01) если убрать этот return, то можно сэкономить 2 байта
+    //! TODO: (на 18.01.24) если убрать этот return, то можно сэкономить 2 байта
   }
 
   //Срезал порядка 50 байт, но не уверен, что это корректная оптимизация
@@ -1281,7 +1282,7 @@ bool setupSound() {
   if (enter.click()) {
     printSoundStatus(tmp_need_sound);
     menu_ptr = SETTINGS;
-    return tmp_need_sound;
+    //return tmp_need_sound;
   }
   else if (up.click() or down.click()) {
 
