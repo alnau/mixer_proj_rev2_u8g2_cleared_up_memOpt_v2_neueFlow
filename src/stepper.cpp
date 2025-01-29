@@ -279,8 +279,16 @@ ISR(TIMER1_COMPA_vect)
 	switch (srd.run_state)
 	{
 	case STOP:
+		
 		// Если не работаем, то обнулим все и остановим таймер1
 		is_stopping = false;
+
+		// TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
+		uint8_t eeprom_0x00 = eeprom_read_byte(0);
+		eeprom_0x00 = eeprom_0x00 & 0b111111101;
+		eeprom_update_byte(0, eeprom_0x00);
+	
+
 		// need_refresh_speed_menu = true;
 		step_count = 0;
 		rest = 0;

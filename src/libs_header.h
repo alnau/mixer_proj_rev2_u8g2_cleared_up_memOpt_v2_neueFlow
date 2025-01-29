@@ -9,6 +9,7 @@
 #include <U8g2lib.h>
 //#include "tiny_button.h"
 #include <EncButton.h>
+#include <Beeper.h>
 
 #include <Arduino.h>
 #include <avr/eeprom.h>

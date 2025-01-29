@@ -1,7 +1,7 @@
 
 //#define WOKWI
 
-//#define IS_DEBUG
+#define IS_DEBUG
 
 
 // (01.11.24) Братан, не панкуй, если вернешься к этому файлу спустя долгое время. Все тестировалось на работу и с 
@@ -76,6 +76,46 @@ inline void loadSettigsRegister() {
 }
 
 /**
+ * @brief Возвращает True если был выставлен бит аварийной остановки
+ * 
+ * @return true Произошла аварийная остановка
+ * @return false Последний запуск закончился корректно
+ */
+bool getEmergStatus() {
+  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  bool emerg = eeprom_0x00 & 0b00000010;
+  
+  bitWrite(eeprom_0x00, 1, 0);     
+  eeprom_update_byte(0, eeprom_0x00);
+
+  return emerg;
+}
+
+/**
+ * @brief Выставляет бит аварийной остановки
+ * 
+ */
+void setEmerg() {
+  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  eeprom_0x00 = eeprom_0x00 | 0b00000010;
+
+  eeprom_update_byte(0, eeprom_0x00);
+  
+}
+
+/**
+ * @brief снимает бит аварийной остановки
+ * 
+ */
+void clearEmerg() {
+  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  eeprom_0x00 = eeprom_0x00 & 0b111111101;
+
+  eeprom_update_byte(0, eeprom_0x00);
+    
+}
+
+/**
  * @brief Инициализация дисплея
  * 
  * Вроде, все очевидно, как по учебнику u8g2
@@ -92,6 +132,20 @@ inline void initDisplay() {
   //refresh_screen = true;
 }
 
+// TODO: логику включения меню можно перенести в checkForWakeup и эту функцию можно включить в initDisplay
+void wakeUpDisplay() {
+    u8g2.clear();
+    u8g2.begin();
+    u8g2.setContrast(0);
+    u8g2.enableUTF8Print();
+    u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
+
+    menu_ptr = MAIN;
+    need_to_load_interface = true;
+
+}
+
+# ifdef PWR_LOSS
 /**
  * @brief отработка потери энергии при отключении системы от сети
  * 
@@ -119,14 +173,16 @@ inline void powerLoss() {
     //debugln(F("Emergency stop byte is set. Saving ramp state..."));
     //debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
     u8g2.setPowerSave(0);
-
+    setEmerg();
     uint32_t time_of_detection = millis();
     while (true) {
       if (millis() - time_of_detection > 10000){
+        interrupts();
+        u8g2.setPowerSave(0);
         // отловили ложную тревогу если спустя 10 с не отключились
-        bitWrite(eeprom_0x00, 1, 0);                            //сняли флаг аварийной остановки
-        eeprom_update_byte(0, eeprom_0x00);
+        clearEmerg();
         pwr_loss = false;
+        startMotor();
         return;
       }
     }
@@ -135,7 +191,7 @@ inline void powerLoss() {
   else
     return;
 }
-
+#endif
 
 /**
  * @brief проверяем, не было ли аварийной остановки
@@ -152,10 +208,10 @@ void checkEmergencyStop() {
     debugln(F("Inside emergency handler"));
     //По идее, это закинет нас в врерывание ISR(TIMER1_COMPA_vect), где произойдет процесс востановления режима работы
     is_restoring = true;
-    OCR1A = 10;
-    // Установим таймер с делителем на 64
-    TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
-    //digitalWrite(ENA_PIN, LOW); //Разбудим двигатель
+    // OCR1A = 10;
+    // // Установим таймер с делителем на 64
+    // TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
+    // //digitalWrite(ENA_PIN, LOW); //Разбудим двигатель
 
 
     // Выведем меню на экран
@@ -169,42 +225,32 @@ void checkEmergencyStop() {
     //необходимо подгрузить параметры последнего режима и выставить is_working, чтобы работа мешалки продолжалась по прерыванию таймера
     // working_in_programming_mode = (tmp >> 3) & 0b00000001;  // выставили режим, в котором происходит работа                            //восстановили предыдущий процесс
 
-    uint16_t last_update_time = (uint16_t)millis();
-    //bool is_lit = false;
-    // if (need_sound)
-    //   tone(BUZZER, BUZZER_PITCH, 100);
+    u8g2.clear();
+    u8g2.setCursor(0, 8);
+    u8g2.print(F(" Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
+    u8g2.updateDisplay();
 
-    //! TODO: перейти на GyverBeeper, он ассинхронный и, (вроде) неблокирующий
+    startMotor();
+    buz.beep(BUZZER_PITCH, UINT16_MAX-1,200, 10000);
 
     while (1) {
-      //МЕРЦАЙ ЭКРАНОМ И ОРИ
-      if ((uint16_t)millis() - last_update_time > 500) {
-        // if (is_lit) {
-        //   //u8g2.setContrast(70);
-        //   is_lit = false;
-        // } else {
-        //   // if (need_sound) {
-        //   //   tone(BUZZER, BUZZER_PITCH, 100);
-        //   // }
-        //   //u8g2.setContrast(0);
-        //   is_lit = true;
-        // }
-        u8g2.clear();
-        u8g2.setCursor(0, 8);
-        u8g2.print(F(" Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
-        u8g2.updateDisplay();
-        last_update_time = (uint16_t)millis();
-      }
 
+      // Логика писка
+      //! TODO: перейти на GyverBeeper, он ассинхронный и, (вроде) неблокирующий
+
+      enter.tick();
+      buz.tick();
       if (enter.click()) {
+        debugln(F("Emergency was handled"));
         //u8g2.setContrast(0);
         //noTone(BUZZER);
         emergency_stop = false;
-        uint8_t tmp = eeprom_read_byte((uint8_t*)0);
-        tmp = tmp & 0b11111101;  // вернули второй бит в состояние 0 TODO: может быть факап
-        eeprom_update_byte((uint8_t*)0, tmp);
+        clearEmerg();
+        buz.stop();
+        buz.tick();
         return;
       }
+      // delay(50);
     }
   }
 }
@@ -225,14 +271,16 @@ void setup() {
   initData();
   initStepper();
   initTimer1();
-  //checkEmergencyStop();
+  checkEmergencyStop();
   menu_ptr = SPEED;
   need_to_load_interface = true;
 
-  // //! TODO: обходится в 240+ байт, что дорого. В финальной версии нужно 
-  // //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
-  // //к именно этой строчке)
-  // attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
+  #ifdef PWR_LOSS
+  //! TODO: обходится в 240+ байт, что дорого. В финальной версии нужно 
+  //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
+  //к именно этой строчке)
+  attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
+  #endif
 
   debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
@@ -369,6 +417,10 @@ void speedMenu() {
     }
     else if (is_working and !need_to_stop) {
       //Если двигатель работал и пользователю необходимо его остановить
+
+      // TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
+			clearEmerg();
+
       need_to_stop = true;  //Установим флаг, который будет обрабатываться в прерывании motor_cntr.c
       refresh_screen = true;
     }
@@ -1426,9 +1478,18 @@ inline void refreshScreen() {
   }
 }
 
+/** 
+ * Проверяем, не нужно ли пользователю реинициализировать дисплей
+ */
+inline void checkForWakeUp() {
+  if (right.hold() and left.hold())
+    wakeUpDisplay(); 
+}
+
 void loop() {
  
   scanButtons();
+  checkForWakeUp();
   tickMenu();
   refreshScreen();
 

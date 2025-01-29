@@ -2,7 +2,7 @@
 
 #include "libs_header.h"
 
-const uint16_t BAUD_RATE = 57600;
+const uint16_t BAUD_RATE = 9600;
 
 //пины кнопок
 const uint8_t FUNC_BTN = 12;
