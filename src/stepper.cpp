@@ -125,8 +125,7 @@ void initTimer1(void)
  * 
  * Я даже не буду пытаться описывать логику этой функции. См комментарии внутри и AVR446
  */
-ISR(TIMER1_COMPA_vect)
-{
+ISR(TIMER1_COMPA_vect) {
 	// Время следующей паузы
 	volatile uint32_t new_step_delay;
 	// для запоминания последней паузы при ускорении. Используется для "затравки" торможения
@@ -157,8 +156,7 @@ ISR(TIMER1_COMPA_vect)
 
 	case ACCEL:
 		// Если в режиме ускорения
-		if (need_to_stop)
-		{
+		if (need_to_stop) {
 			//  обработка необходимости остановки
 
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
@@ -167,8 +165,7 @@ ISR(TIMER1_COMPA_vect)
 
 			new_step_delay = srd.step_delay; // Делаем еще одну задержку аналогичную предыдущей
 		}
-		else
-		{
+		else {
 			// делаем шаг
 			doTheFStep(srd.dir);
 			step_count++;																						 	// прибавим общее число шагов
@@ -177,8 +174,7 @@ ISR(TIMER1_COMPA_vect)
 			rest = ((2 * (int32_t)srd.step_delay) + rest) % (4 * srd.accel_count + 1);								// обновил остаток для следующей итерации
 
 			// Проверим, не достигли ли мы макс скорости
-			if (new_step_delay <= srd.min_delay)
-			{
+			if (new_step_delay <= srd.min_delay) {
 				last_accel_delay = new_step_delay; // сохранили последний вычисленный период ожидания
 				new_step_delay = srd.min_delay;	   // Записали что теперь мы вращаемся с фиксированной скоростью, определяемой минимальной паузой
 				rest = 0;
@@ -190,22 +186,19 @@ ISR(TIMER1_COMPA_vect)
 		break;
 
 	case RUN:
-		if (need_to_stop)
-		{
+		if (need_to_stop) {
 			// обработка необходимости остановки
 
 			// далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			srd.accel_count = -(int32_t)srd.speed * srd.speed / (int32_t)(((int32_t)A_x20000 * USER_DECEL) / 100);
 			new_step_delay = last_accel_delay;
 		}
-		else
-		{
+		else {
 			doTheFStep(srd.dir);
 			step_count++;
 			new_step_delay = srd.min_delay; // каждый раз обновляем паузу как минмиальную задержку
 			// Проверим, не пора ли нам остановиться
-			if (step_count >= srd.decel_start)
-			{
+			if (step_count >= srd.decel_start) {
 				srd.accel_count = srd.decel_val; // Загрузили кол-во шагов, необходимое для торможения (вернее, их отрицательную величину)
 				// Начать торможение с той-же паузой, которая была вычислена на последнем ускорении (TODO: ?!)
 				new_step_delay = last_accel_delay;
@@ -219,8 +212,7 @@ ISR(TIMER1_COMPA_vect)
 
 	case DECEL:
 		// Аналогично ускорению,
-		if (need_to_stop)
-		{
+		if (need_to_stop) {
 			//  обработка необходимости остановки
 
 			//  далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
@@ -297,9 +289,8 @@ ISR(TIMER1_COMPA_vect)
 
 						TCCR1B = (1 << WGM12) | (1 << CS12) ; // Выставляем CTC (Clear Timer on Compare Match mode) и ставим делитель на 256
 						
-						OCR1A = 62500 - 1; // Выставим величину, с которой мы сравниваем на прерывания каждую секунду
+						OCR1A = 62536 - 1; // Выставим величину, с которой мы сравниваем на прерывания каждую секунду
 
-						//TIMSK1 |= (1 << OCIE1A); // Разрешаем  TIMER1_COMPA прерывания (не факт что нужно, просто на всякий случай)
 						// srd.t_pause = md.mem_t_pause; //Выставим счетчик паузы из памяти (вероятно, может понадобиться вычесть 1с)
 						srd.t_pause = CYCLE_DATA.t_pause;
 						interrupts(); // Разрешаем прерывания
@@ -319,7 +310,6 @@ ISR(TIMER1_COMPA_vect)
 
 			is_working = false;
 			refresh_screen = true;
-			// PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH
 		}
 		else
 		{
@@ -337,7 +327,6 @@ ISR(TIMER1_COMPA_vect)
 					//digitalWrite(ENA_PIN, HIGH);
 					is_working = false;
 					refresh_screen = true;
-					// PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH
 				}
 				else
 				{

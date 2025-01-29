@@ -534,7 +534,7 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
  * @param data число, которое требуется вывести в десятичной форме
  * @param ptr номер строки, в которой оно находится
  * @param is_setup если true => выведет подчеркивание под необходимым порядком числа (см digit)
- * @param digit порядок числа 0 - единицы, 1 - десятки, 2 - сотни. Актуально только при is_setup == true
+ * @param digit порядок числа 1 - единицы, 2 - десятки, 3 - сотни. Актуально только при is_setup == true
  */
 void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digit = 0) {
 
@@ -685,8 +685,6 @@ uint8_t setupNumbers(uint8_t data, uint8_t ptr) {
         break;
     }
     printNumbers(tmp, ptr, true, digit);
-    //refresh_screen = true;
-    //u8g2.updateDisplay();
   }
   return tmp;
 }
