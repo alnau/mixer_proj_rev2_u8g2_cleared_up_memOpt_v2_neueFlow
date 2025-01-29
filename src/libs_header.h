@@ -1,10 +1,10 @@
 #ifndef LIBS_HEADER_H
 #define LIBS_HEADER_H
 
-// #define EB_NO_BUFFER
-// #define EB_NO_COUNTER
-// #define EB_NO_CALLBACK
-// #define EB_NO_FOR
+#define EB_NO_BUFFER
+#define EB_NO_COUNTER
+#define EB_NO_CALLBACK
+#define EB_NO_FOR
 
 #include <U8g2lib.h>
 //#include "tiny_button.h"

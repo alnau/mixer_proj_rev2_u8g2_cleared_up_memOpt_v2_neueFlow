@@ -92,103 +92,6 @@ void startMotor()
 
 }
 
-	// /*! \brief Инициализирует режим работы с заданным числом шагов.
-	// *
-	// *
-	// * Шаговый мотор делает заданное число шагов, реализуя рампу с заданным ускорением,
-	// * замедлением и скоростью. Если ускорение/замедление слишком мало и шагов недостаточно
-	// * для достижения необходимой скорости, торможение начнется до достижения "полки"
-	// *
-	// * \param step - число шагов
-	// * \param accel - величина ускорения, в 0.01 рад/с^2
-	// * \param deccel - величина ускорения, в 0.01 рад/с^2
-	// * \param speed - Необходимая скорость в 0.01 рад/с
-	// * \param t_pause - время паузы в секундах
-	// * \param n_cyles - число повторений циклов рампы
-	// * \param is_bidir - булево значение (true -> двустороннее вращение, false -> одностороннее)
-	// */
-	// void move(int32_t step, uint16_t accel, uint16_t decel, uint16_t speed, uint16_t t_pause, uint16_t n_cycles, bool is_bidir)
-	// {
-	//
-	// 	//! Число шагов до того, как мы достигнем макс скорости
-	// 	uint32_t max_s_lim;
-	// 	//! число шагов до начала торможения (если не успеем достичь макс скорости) TODO: НЕ НУЖНО, УБРАТЬ
-	// 	//uint32_t accel_lim;
-	//
-	// 	srd.n_cycles = n_cycles; // И кол-во циклов
-	// 	srd.accel = accel;		 // Сохранение ускорения для пересчета новых циклов
-	// 	srd.decel = decel;
-	// 	srd.is_bidir = is_bidir; // Запомнили одно- или двухсторотнее вращение
-	// 	srd.t_pause = t_pause;	 // Сохраним время паузы
-	// 	srd.speed = speed;
-	//
-	// 	// Выставим направление вращения, основываясь на знаке числа шагов
-	// 	// if (step < 0)
-	// 	// {
-	// 	// 	srd.dir = CCW;
-	// 	// 	step = -step;
-	// 	// }
-	// 	// else
-	// 	// {
-	// 	// 	srd.dir = CW;
-	// 	// }
-	//
-	// 	// Двигаться  оько если число шагов не равно нулю
-	// 	if (step != 0)
-	// 	{
-	// 		// Ввести верхний предел скорости, рассчитав минимальную паузу
-	// 		// min_delay = (alpha / tt)/ w
-	// 		srd.min_delay = A_T_x100 / speed;
-	//
-	// 		// Находим паузу до первого шага (c_0) для того, чтобы задать ускорение
-	// 		// step_delay = 1/tt * sqrt(2*alpha/accel)
-	// 		// step_delay = ( tfreq*0.676/100 )*100 * sqrt( (2*alpha*10000000000) / (accel*100) )/10000
-	// 		srd.step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / accel)) / 100;
-	//
-	// 		// найдем через сколько шагов мы достигнем макс. скорости
-	// 		// max_s_lim = speed^2 / (2*alpha*accel)
-	// 		max_s_lim = (int32_t)speed * speed / (int32_t)(((int32_t)A_x20000 * accel) / 100);
-	// 		// если по какой-то причине мы получим 0, то все равно делаем хоть один шаг
-	// 		// if (max_s_lim == 0)
-	// 		// {
-	// 		// 	max_s_lim = 1;
-	// 		// }
-	//
-	// 		/*
-	// 		* Найдем через сколько шагов нам нужно было-бы начать торможение, если бы нам нужно было только ускоряться и тормозить '/=\' => '/\'
-	// 		* n1 = (n1+n2)decel / (accel + decel)
-	// 		*/
-	// 		//accel_lim = ((int32_t)step * decel) / (accel + decel);
-	// 		// Аналогично, мы должны ускоритьс хлоть один шаг перед началом торможения
-	// 		// if (accel_lim == 0)
-	// 		// {
-	// 		// 	accel_lim = 1;
-	// 		// }
-	//
-	// 		// Логика такая, что (max_s_lim) * accel/decel = w^2/(2 alpha accel) *accel/decel = w^2/(2 alp
-	// 		srd.decel_val = -((int32_t)max_s_lim * accel) / decel;
-	//
-	// 		// Отсюда srd.decel_val полностью адекватное число шагов для того, чтобы затормозить двигатель
-	//
-	// 		// Так как srd.decel_val < 0 => step + srd.decel_val = step - steps_to_stop - норм
-	// 		srd.decel_start = step + srd.decel_val;
-	//
-	// 		srd.run_state = ACCEL;
-	//
-	//
-	// 		debugln(F("ACCEL"));
-	//
-	// 		// Обновим счетчик
-	// 		srd.accel_count = 0;
-	// 		OCR1A = 10;
-	// 		// Установим таймер с делителем на 64
-	// 		TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
-	//
-	// 		// И опустим ENA_PIN, чтобы двигатель работал
-	// 		// PORTD &= ~(1<< ENA_PIN); // ENA_PIN -> LOW
-	// 		digitalWrite(ENA_PIN, LOW);
-	// 	}
-	// }
 
 /**
  * @brief Инициализация счетчика на Timer1
@@ -233,59 +136,11 @@ ISR(TIMER1_COMPA_vect)
 	// сохраняем остаток от деления при вычислении периода между шагами
 	volatile static uint32_t rest = 0;
 
-#ifdef POWER_LOSS
-
-	if (pwr_loss) {
-		// отловили отключение энергии
-		saveRampState();
-		pwr_loss = false;
-		//need_to_stop = true; // Попытаемся затормозить насколько хватит энергии
-	}
-
-	if (is_restoring) {
-		debugln(F("Restoring motor state vector"));
-		// Если востанавливаем состояние рампы после нежелательного перезапуска
-		restoreRampState();
-
-		debugln(F("Data loaded succesfully"));
-
-		is_restoring = false;
-
-		// Вернем все параметры рампы как-будто мы только начали очередной цикл (удержим только число оставшихся циклов)
-		last_accel_delay = 0;
-		step_count = 0;
-		rest = 0;
-		srd.run_state = ACCEL;
-		srd.accel_count = 0;
-		srd.step_delay = (T1_FREQ_148 * m_sqrt(A_SQ / srd.accel)) / 100;
-		OCR1A = srd.step_delay;
-		digitalWrite(ENA_PIN, LOW);
-		is_working = true;
-
-		return;
-	}
-	else
-	{
-		// загрузим в OCR1A паузу c_i (изначально c_0, но обновляется при каждом вызове)
-		OCR1A = srd.step_delay;
-		//OCR1B = (srd.step_delay >> 8);
-	}
-#else
 	OCR1A = srd.step_delay;
-#endif
 
-	switch (srd.run_state)
-	{
+	switch (srd.run_state) {
 	case STOP:
-		
 		// Если не работаем, то обнулим все и остановим таймер1
-		is_stopping = false;
-
-		// TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
-		// uint8_t eeprom_0x00 = eeprom_read_byte((uint8_t*)0);
-		// eeprom_0x00 = eeprom_0x00 & 0b111111101;
-		// eeprom_update_byte((uint8_t*)0, eeprom_0x00);
-	
 
 		// need_refresh_speed_menu = true;
 		step_count = 0;
@@ -293,7 +148,11 @@ ISR(TIMER1_COMPA_vect)
 		refresh_screen = true;
 		// Остановим Timer1
 		TCCR1B &= ~((1 << CS12) | (1 << CS11) | (1 << CS10));
+		
+		// отключим удержание двигателя
 		digitalWrite(ENA_PIN, HIGH);
+		
+		is_stopping = false;
 		break;
 
 	case ACCEL:
@@ -338,7 +197,6 @@ ISR(TIMER1_COMPA_vect)
 			// далее пересчитаем режим торможения. Для этого необходимо пересчитать srd.accel_count
 			srd.accel_count = -(int32_t)srd.speed * srd.speed / (int32_t)(((int32_t)A_x20000 * USER_DECEL) / 100);
 			new_step_delay = last_accel_delay;
-			// OCR1A = 10; //минимальная задержка чтобы затриггерить новое прерывание
 		}
 		else
 		{
@@ -392,13 +250,10 @@ ISR(TIMER1_COMPA_vect)
 					is_working = false;
 					refresh_screen = true;
 				}
-				else
-				{
-					if (srd.t_pause == 0)
-					{
+				else {
+					if (srd.t_pause == 0) {
 						// Если нет паузы, то проводим все вычисления здесь
-						if (srd.n_cycles == 1)
-						{
+						if (srd.n_cycles == 1) {
 							// Если после этого не осталось циклов, то тормозим
 							srd.run_state = STOP;
 							debugln(F("STOP"));
@@ -406,18 +261,14 @@ ISR(TIMER1_COMPA_vect)
 							//digitalWrite(ENA_PIN, HIGH);
 							is_working = false;
 							refresh_screen = true;
-							// PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH (убрали ток удержания)
 						}
-						else
-						{
+						else {
 							// Если циклы остались (бесконечно или конечно)
-							if (srd.is_bidir)
-							{
+							if (srd.is_bidir) {
 								// Если двустороннее вращение, то меняем направление
 								srd.dir = (srd.dir == CCW) ? CW : CCW;
 							}
-							if (srd.n_cycles != 0)
-							{
+							if (srd.n_cycles != 0) {
 								srd.n_cycles--;
 							}
 							// Логика запуска цикла по-новой
@@ -432,8 +283,7 @@ ISR(TIMER1_COMPA_vect)
 							OCR1A = new_step_delay; // На всякий случай
 						}
 					}
-					else
-					{
+					else {
 
 						// Запускаем паузу, и перенесем все рассчеты нового цикла в нее
 						srd.run_state = PAUSE;
@@ -467,8 +317,6 @@ ISR(TIMER1_COMPA_vect)
 			srd.run_state = STOP;
 			debugln(F("STOP"));
 
-
-			//digitalWrite(ENA_PIN, HIGH);
 			is_working = false;
 			refresh_screen = true;
 			// PORTD |= (1<< ENA_PIN); // ENA_PIN -> HIGH

@@ -24,7 +24,7 @@
  * @return true - первая инициализация
  * @return false - иначе
  */
-bool check_if_first_init() {
+bool checkIfFirstInit() {
     uint8_t first_byte_in_EEPROM;
     //bool is_it_first_init = false;
     first_byte_in_EEPROM = eeprom_read_byte((uint8_t *)0);

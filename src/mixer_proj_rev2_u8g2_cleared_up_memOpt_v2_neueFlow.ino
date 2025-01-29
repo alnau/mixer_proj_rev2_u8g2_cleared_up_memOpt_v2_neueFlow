@@ -1,7 +1,7 @@
 
 //#define WOKWI
 
-#define IS_DEBUG
+// #define IS_DEBUG
 
 
 // (01.11.24) Братан, не панкуй, если вернешься к этому файлу спустя долгое время. Все тестировалось на работу и с 
@@ -29,7 +29,7 @@ void printMenuLoadingScreen(const __FlashStringHelper* menu_name);
  * а также задаем стандартные "настройки" в первый байт EEPROM
  */
 inline void initData() {
-  if (check_if_first_init()) {
+  if (checkIfFirstInit()) {
     //если устройство запускается впервые
 
     debugln(F("First start"));
@@ -75,6 +75,7 @@ inline void loadSettigsRegister() {
   need_sound = (data_container >> 2) & 0b00000001;
 }
 
+
 /**
  * @brief Возвращает True если был выставлен бит аварийной остановки
  * 
@@ -115,83 +116,32 @@ void clearEmerg() {
     
 }
 
+
 /**
  * @brief Инициализация дисплея
  * 
  * Вроде, все очевидно, как по учебнику u8g2
  */
-inline void initDisplay() {
-  
+void wakeUpDisplay() {
+  u8g2.clear();
   u8g2.begin();
   u8g2.setContrast(0);
   u8g2.enableUTF8Print();
   u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
-  
-
-  printMenuLoadingScreen(F(" Загрузка..."));
-  //refresh_screen = true;
 }
 
-// TODO: логику включения меню можно перенести в checkForWakeup и эту функцию можно включить в initDisplay
-void wakeUpDisplay() {
-    u8g2.clear();
-    u8g2.begin();
-    u8g2.setContrast(0);
-    u8g2.enableUTF8Print();
-    u8g2.setFont(u8g2_font_haxrcorp4089_t_cyrillic);
-
-    menu_ptr = MAIN;
-    need_to_load_interface = true;
-
-}
-
-# ifdef PWR_LOSS
 /**
- * @brief отработка потери энергии при отключении системы от сети
+ * @brief Просто оболочка wakeUpDisplay + вывод загрузочного меню
  * 
- * если обаруживает потерю в состоянии работы, выставляет соответствующий флаг pwr_loss
- * (его должен отловить ISR, остановить работу двигателя и параллельно, в панике, сохранять
- * текущие данные рампы)
+ * Единcтвенная причина существования этой функции - однообразность вызовов в setup 
  * 
- * В свою очередь, функция выставляет флаг аварийной остановки в первый байт (с учетом отсчета с нуля, 
- * маска 0b00000010) по адресу 0x00 @ EEPROM. По нему контроллер во время инициализации 
- * может понять, что последнее выключение было "катастрофическим" 
  */
-inline void powerLoss() {
-  
-  if (is_working) {
-    noInterrupts();
-
-    pwr_loss = true;
-    u8g2.setPowerSave(1);
-    uint8_t eeprom_0x00 = eeprom_read_byte(0);
-    bitWrite(eeprom_0x00, 1, 1);                            //установили флаг аварийной остановки
-    //eeprom_0x00 = setBit(eeprom_0x00, working_in_programming_mode, 4);  //записали из какого режима велась работа
-    eeprom_update_byte(0, eeprom_0x00);
-
-    interrupts();
-    //debugln(F("Emergency stop byte is set. Saving ramp state..."));
-    //debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
-    u8g2.setPowerSave(0);
-    setEmerg();
-    uint32_t time_of_detection = millis();
-    while (true) {
-      if (millis() - time_of_detection > 10000){
-        interrupts();
-        u8g2.setPowerSave(0);
-        // отловили ложную тревогу если спустя 10 с не отключились
-        clearEmerg();
-        pwr_loss = false;
-        startMotor();
-        return;
-      }
-    }
-    return;
-  } 
-  else
-    return;
+inline void initDisplay() {
+  wakeUpDisplay();
+  printMenuLoadingScreen(F(" Загрузка..."));
 }
-#endif
+
+
 
 /**
  * @brief проверяем, не было ли аварийной остановки
@@ -208,19 +158,7 @@ void checkEmergencyStop() {
     debugln(F("Inside emergency handler"));
     //По идее, это закинет нас в врерывание ISR(TIMER1_COMPA_vect), где произойдет процесс востановления режима работы
     is_restoring = true;
-    // OCR1A = 10;
-    // // Установим таймер с делителем на 64
-    // TCCR1B |= ((0 << CS12) | (1 << CS11) | (1 << CS10));
-    // //digitalWrite(ENA_PIN, LOW); //Разбудим двигатель
-
-
-    // Выведем меню на экран
-    //u8g2.clear();
-    //u8g2.setCursor(0, 8);
-    // TODO: перевести на userInterfaceMessage()
-    //u8g2.print(F("Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
-    //u8g2. ("Контроллер был", "отключен во время работы", "Зажмите [E] чтобы продолжить", "Ok"); //блокирующее. Будет тяжело мерцать и орать
-    //u8g2.updateDisplay();
+   
 
     //необходимо подгрузить параметры последнего режима и выставить is_working, чтобы работа мешалки продолжалась по прерыванию таймера
     // working_in_programming_mode = (tmp >> 3) & 0b00000001;  // выставили режим, в котором происходит работа                            //восстановили предыдущий процесс
@@ -238,27 +176,18 @@ void checkEmergencyStop() {
 
     startMotor();
     is_working = true;
-    buz.beep(BUZZER_PITCH, UINT16_MAX-1,200, 10000);
+    buz.beep(BUZZER_PITCH, UINT16_MAX-1,200, 5000);
 
     while (1) {
-
-      // Логика писка
-      //! TODO: перейти на GyverBeeper, он ассинхронный и, (вроде) неблокирующий
-
       enter.tick();
       buz.tick();
       if (enter.click()) {
         debugln(F("Emergency was handled"));
-        //u8g2.setContrast(0);
-        //noTone(BUZZER);
         emergency_stop = false;
-        // clearEmerg(); // Нет необходимости - мотор-то работает
         buz.stop();
-        // buz.tick();
         enter.clear();
         return;
       }
-      // delay(50);
     }
   }
 }
@@ -283,13 +212,6 @@ void setup() {
   menu_ptr = SPEED;
   need_to_load_interface = true;
 
-  #ifdef PWR_LOSS
-  //! TODO: обходится в 240+ байт, что дорого. В финальной версии нужно 
-  //реализовать на более низком уровне (05.11.24: не уверен, насколько этот комментарий относится
-  //к именно этой строчке)
-  attachInterrupt(digitalPinToInterrupt(PWR_LOSS_PIN), powerLoss, FALLING);  
-  #endif
-
   debug(F("Settings EEPROM Data: ")); debugln(eeprom_read_byte(0));
 }
 
@@ -308,8 +230,15 @@ void printMainMenu() {
   }
 }
 
-//осовная логика главного меню
-// НЕ РЕНДЕРЕР
+/**
+ * @brief Основная логика главного меню
+ * 
+ * Все дальнейшие функции рендера менюшек будут иметь схожую структуру:
+ * в случае, если это первый запуск менюшки (need_to_load_interface == true)
+ * мы проводим инициализацию всех параметров, а также вызываем функцию отрисовки 
+ * данного меню. Далее идет опрос кнопок и, либо меняем состояние текущего меню 
+ * (переходим к другому эл-ту, либо меняем какой-то параметр), либо переходим в другое меню
+ */
 void mainMenu() {
   static uint8_t main_menu_ptr;
 
@@ -345,10 +274,12 @@ void mainMenu() {
 }
 
 
-//Выводит текущую скорость
-//НЕ РЕНДЕРЕР
-void printSpeedMenu(uint8_t speed, bool is_working) {
-  //scale = 5 => w = 6*4 = 24
+/**
+ * @brief отрисовка меню скорости
+ * 
+ * @param speed скорость (об/мин)
+ */
+void printSpeedMenu(uint8_t speed) {
   const uint8_t start_row_y = 3;
 
   uint8_t order = calculateOrder(speed);
@@ -375,8 +306,12 @@ void printSpeedMenu(uint8_t speed, bool is_working) {
 
 
 
-
-
+/**
+ * @brief вывод на дисплей и обработка событий внутри меню скорости
+ * 
+ * (см mainMenu(), здесь и далее все будет аналогично) 
+ * 
+ */
 void speedMenu() {
 
   uint8_t speed = 0; 
@@ -396,7 +331,7 @@ void speedMenu() {
       
     }
 
-    printSpeedMenu(speed, is_working);
+    printSpeedMenu(speed);
     need_to_load_interface = false;
   }
 
@@ -411,9 +346,7 @@ void speedMenu() {
     if ((prev_speed != speed) and (((uint16_t)millis() - t_since_last_update > UPDATE_PERIOD) or refresh_screen)) {
       prev_speed = speed;
       t_since_last_update = (uint16_t)millis();
-      printSpeedMenu(speed, is_working);
-      
-      //u8g2.updateDisplay();
+      printSpeedMenu(speed);
     }   
   }
 
@@ -431,7 +364,6 @@ void speedMenu() {
       debugln(F("Stopping"));
       //Если двигатель работал и пользователю необходимо его остановить
 
-      // TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
 			clearEmerg();
 
       need_to_stop = true;  //Установим флаг, который будет обрабатываться в прерывании motor_cntr.c
@@ -449,10 +381,17 @@ void speedMenu() {
 }
 
 
-//выводит время в формате M:SS у правого края экрана
+//
 // Если выставлен is_setup, то подчеркнет цифру
 //с порядковым номером digit
-//РЕНДЕРЕР (НО МОЖНО ОПТИМИЗИРОВАТЬ)
+/**
+ * @brief выводит время в формате M:SS у правого края экрана
+ * 
+ * @param T время в секундах
+ * @param ptr номер строки (начиная с нуля), в которой необходимо выводить время
+ * @param is_setup флаг того, что идет настройка. В этом случае, будет выведено нижнее подчеркиание под нужным порядком M:SS
+ * @param digit опрядковый номер цифры в представлении времени в формате M:SS
+ */
 void printTime(uint16_t T, uint8_t ptr, bool is_setup = false, uint8_t digit = 0) {
 
   enum DIGIT {
@@ -508,8 +447,14 @@ void printTime(uint16_t T, uint8_t ptr, bool is_setup = false, uint8_t digit = 0
   refresh_screen = true;
 }
 
-//режим установки времени работы
-// НЕ РЕНДЕРЕР
+
+/**
+ * @brief режим установки времени работы
+ * 
+ * @param T время (в секундах), которое нужноустановить
+ * @param ptr номер строки, в которой проводится установка (чисто для вывода значений на дисплей)
+ * @return uint16_t время, установленное пользователем в сек
+ */
 uint16_t setupTime(uint16_t T, uint8_t ptr) {
 
   static uint8_t digit;
@@ -582,8 +527,15 @@ uint16_t setupTime(uint16_t T, uint8_t ptr) {
 
 
 
-//Вывод числа в информационной колонке. Ожидает не больше трехзначных
 // РЕНДЕРЕР (НО МОЖЕМ ОПТИМИЗИРОВАТЬ)
+/**
+ * @brief Вывод числа в информационной колонке. Ожидает не больше трехзначных (реально 0-255; пока)
+ * 
+ * @param data число, которое требуется вывести в десятичной форме
+ * @param ptr номер строки, в которой оно находится
+ * @param is_setup если true => выведет подчеркивание под необходимым порядком числа (см digit)
+ * @param digit порядок числа 0 - единицы, 1 - десятки, 2 - сотни. Актуально только при is_setup == true
+ */
 void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digit = 0) {
 
   uint8_t order = calculateOrder(data);  //рассчет порядка числа
@@ -624,7 +576,7 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
     itoa(t, t_c, 10);
     itoa(o, o_c,10);
 
-
+    // ширина (px) чисел в сотнях (h), десятках (t) и единицах (o)
     uint8_t h_width = u8g2.getStrWidth(h_c);
     uint8_t t_width = u8g2.getStrWidth(t_c);
     uint8_t o_width = u8g2.getStrWidth(o_c);
@@ -660,8 +612,13 @@ void printNumbers(uint8_t data, uint8_t ptr, bool is_setup = false, uint8_t digi
   }
 */
 
-//перегрузка на случай любой (в разумных пределах) длины
-// РЕНДЕРЕР
+/**
+ * @brief Печеть текстовых значений любой (в разумных пределах, ориентируйся на 3 символа) длины в поле значений (правая колонка)
+ * 
+ * @param text текст из flash памяти
+ * @param ptr номер строки, в которую нужно вывести значение
+ * @param len длина строки (TODO: устарело, перевести на u8g2.getStrWidth)
+ */
 void printText(const __FlashStringHelper* text, uint8_t ptr, uint8_t len) {
   u8g2.setDrawColor(0);
   u8g2.drawBox(SCREEN_WIDTH - 3 * 6 - DATA_X_BIAS, (2 * ptr + 1) * 8 + 5, 16 + DATA_X_BIAS, 1);
@@ -1388,15 +1345,6 @@ inline void scanButtons() {
   right.tick();
   up.tick();
   down.tick();
-
-  /*
-    Button::tick(enter);
-    Button::tick(func);
-    Button::tick(left);
-    Button::tick(right);
-    Button::tick(up);
-    Button::tick(down);
-  */
 }
 
 /*
@@ -1497,9 +1445,10 @@ inline void refreshScreen() {
  * Проверяем, не нужно ли пользователю реинициализировать дисплей
  */
 inline void checkForWakeUp() {
-  if (right.holdFor(1000) and left.holdFor(1000)){
+  if (right.hold() and left.hold()){
     wakeUpDisplay(); 
-    debugln(F("wake up"));
+    menu_ptr = MAIN;
+    need_to_load_interface = true;
     right.clear();
     left.clear();
   }
