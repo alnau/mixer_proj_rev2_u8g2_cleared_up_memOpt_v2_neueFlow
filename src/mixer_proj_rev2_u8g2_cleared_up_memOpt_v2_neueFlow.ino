@@ -82,11 +82,11 @@ inline void loadSettigsRegister() {
  * @return false Последний запуск закончился корректно
  */
 bool getEmergStatus() {
-  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  uint8_t eeprom_0x00 = eeprom_read_byte((uint8_t*)0);
   bool emerg = eeprom_0x00 & 0b00000010;
   
   bitWrite(eeprom_0x00, 1, 0);     
-  eeprom_update_byte(0, eeprom_0x00);
+  eeprom_update_byte((uint8_t*)0, eeprom_0x00);
 
   return emerg;
 }
@@ -96,10 +96,10 @@ bool getEmergStatus() {
  * 
  */
 void setEmerg() {
-  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  uint8_t eeprom_0x00 = eeprom_read_byte((uint8_t*)0);
   eeprom_0x00 = eeprom_0x00 | 0b00000010;
 
-  eeprom_update_byte(0, eeprom_0x00);
+  eeprom_update_byte((uint8_t*)0, eeprom_0x00);
   
 }
 
@@ -108,10 +108,10 @@ void setEmerg() {
  * 
  */
 void clearEmerg() {
-  uint8_t eeprom_0x00 = eeprom_read_byte(0);
+  uint8_t eeprom_0x00 = eeprom_read_byte((uint8_t*)0);
   eeprom_0x00 = eeprom_0x00 & 0b111111101;
 
-  eeprom_update_byte(0, eeprom_0x00);
+  eeprom_update_byte((uint8_t*)0, eeprom_0x00);
     
 }
 
@@ -227,10 +227,17 @@ void checkEmergencyStop() {
 
     u8g2.clear();
     u8g2.setCursor(0, 8);
-    u8g2.print(F(" Контроллер был \n\r отключен во время \n\r работы \n\r Зажмите Enter чтобы \n\r продолжить"));
+    u8g2.print(F(" Контроллер был отключен"));
+    u8g2.setCursor(0, 24);
+    u8g2.print(F(" во время работы"));
+    u8g2.setCursor(0, 40);
+    u8g2.print(F(" Нажмите Enter чтобы"));
+    u8g2.setCursor(0, 56);
+    u8g2.print(F(" продолжить"));  
     u8g2.updateDisplay();
 
     startMotor();
+    is_working = true;
     buz.beep(BUZZER_PITCH, UINT16_MAX-1,200, 10000);
 
     while (1) {
@@ -245,9 +252,10 @@ void checkEmergencyStop() {
         //u8g2.setContrast(0);
         //noTone(BUZZER);
         emergency_stop = false;
-        clearEmerg();
+        // clearEmerg(); // Нет необходимости - мотор-то работает
         buz.stop();
-        buz.tick();
+        // buz.tick();
+        enter.clear();
         return;
       }
       // delay(50);
@@ -410,12 +418,17 @@ void speedMenu() {
   }
 
   if (enter.click()) {
+    debugln(F("Enter"));
     if (!need_to_stop and !is_working) {
+      
       //если не работали и нажали Enter, начинаем работу
       is_working = true;
+      setEmerg();
+      
       startMotor();
     }
     else if (is_working and !need_to_stop) {
+      debugln(F("Stopping"));
       //Если двигатель работал и пользователю необходимо его остановить
 
       // TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
@@ -426,6 +439,7 @@ void speedMenu() {
     }
   }
   else if (func.click()) {
+    debugln(F("func"));
     //если пользователь нажал на настройку,выкидываем его в главное меню, при этом продолжая работу в прерываниях
     menu_ptr = MAIN;
     need_to_load_interface = true;
@@ -1374,6 +1388,7 @@ inline void scanButtons() {
   right.tick();
   up.tick();
   down.tick();
+
   /*
     Button::tick(enter);
     Button::tick(func);
@@ -1482,8 +1497,12 @@ inline void refreshScreen() {
  * Проверяем, не нужно ли пользователю реинициализировать дисплей
  */
 inline void checkForWakeUp() {
-  if (right.hold() and left.hold())
+  if (right.holdFor(1000) and left.holdFor(1000)){
     wakeUpDisplay(); 
+    debugln(F("wake up"));
+    right.clear();
+    left.clear();
+  }
 }
 
 void loop() {

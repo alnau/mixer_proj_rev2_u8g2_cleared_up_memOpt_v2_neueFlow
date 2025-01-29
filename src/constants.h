@@ -138,7 +138,7 @@ const uint8_t RECIEVE_DATA = 17;
 #define DATA_X_BIAS 7
 #define LINE_Y_BIAS -1
 //! Время загрузки менюшек в мс
-#define LOADING_TIME 500
+#define LOADING_TIME 1000
 
 // Пин пьезоэлемента (пока не используется)
 #define BUZZER 3

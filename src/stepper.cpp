@@ -15,7 +15,6 @@ speedRampData srd;
  */
 void startMotor()
 {
-
 	//srd.dir = CCW;
 
 	srd.speed = 10 * PI * R_REDUCTION * CYCLE_DATA.v_const / 3; //(2*3.14*100*RPM)/(60);
@@ -90,7 +89,6 @@ void startMotor()
 	// И опустим ENA_PIN, чтобы двигатель работал
 	// PORTD &= ~(1<< ENA_PIN); // ENA_PIN -> LOW
 	digitalWrite(ENA_PIN, LOW);
-	
 
 }
 
@@ -284,9 +282,9 @@ ISR(TIMER1_COMPA_vect)
 		is_stopping = false;
 
 		// TODO вероятно следует убрать в случае, если будет отработка детектирования остановки по внешнему сигналу 
-		uint8_t eeprom_0x00 = eeprom_read_byte(0);
-		eeprom_0x00 = eeprom_0x00 & 0b111111101;
-		eeprom_update_byte(0, eeprom_0x00);
+		// uint8_t eeprom_0x00 = eeprom_read_byte((uint8_t*)0);
+		// eeprom_0x00 = eeprom_0x00 & 0b111111101;
+		// eeprom_update_byte((uint8_t*)0, eeprom_0x00);
 	
 
 		// need_refresh_speed_menu = true;
