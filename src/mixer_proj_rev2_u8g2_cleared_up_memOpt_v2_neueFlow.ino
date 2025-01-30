@@ -1,7 +1,7 @@
 
 //#define WOKWI
 
-// #define IS_DEBUG
+#define IS_DEBUG
 
 
 // (01.11.24) Братан, не панкуй, если вернешься к этому файлу спустя долгое время. Все тестировалось на работу и с 
@@ -1443,17 +1443,22 @@ inline void refreshScreen() {
  * Проверяем, не нужно ли пользователю реинициализировать дисплей
  */
 inline void checkForWakeUp() {
-  if (right.hold() and left.hold()){
+  static uint16_t time_since_last_init;
+  if (right.holdFor(1000) and left.holdFor(1000) and (millis() - time_since_last_init) >1000){
+    debugln(F("Wake up"));
     wakeUpDisplay(); 
     menu_ptr = MAIN;
     need_to_load_interface = true;
+    buz.beep(BUZZER_PITCH,1,200);
     right.clear();
     left.clear();
+    time_since_last_init = millis();
   }
 }
 
 void loop() {
- 
+  
+  buz.tick();
   scanButtons();
   checkForWakeUp();
   tickMenu();
